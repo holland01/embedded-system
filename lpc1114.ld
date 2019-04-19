@@ -30,10 +30,11 @@ SECTIONS {
          } > sram
 
          __DATA_LMA = LOADADDR(.data);
-         __DATA_SIZE = LOADADDR(.data) + SIZEOF(.data)
+         __DATA_END = LOADADDR(.data) + SIZEOF(.data);
          __DATA_VMA = ADDR(.data);
          __INITIAL_SP = ORIGIN(sram) + LENGTH(sram);
          __VECTOR_CHECKSUM = 0 - __INITIAL_SP - (reset + 1) - (NMI + 1) - (hardfault + 1);
+
          GPIO0 = 0x50000000;
          GPIO1 = 0x50010000;
 }
