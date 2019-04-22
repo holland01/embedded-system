@@ -43,14 +43,149 @@ enum CLOCK_SOURCE_SELECT_ {
 #define FLASH_CTRL_BLOCK_ADDR 0x4003C000
 #define FLASH_CTRL_FLASHCFG_OFFSET REG_OFFSET(0x10)
 #define FLASH_CTRL_MEMORY_ACCESS_TIME_2 0x1
-			
+
+//-------------------------------------------------------
+
+enum /* morse tick values in milliseconds */ {
+	MT_DOT = 250,
+	MT_DASH = 750,
+	MT_INTER_DOT = 250,
+	MT_INTER_WORD = 1750,
+	MT_INTER_CHAR = 750
+};
+
+enum /* morse command indices */ {
+	MC_H = 0,
+	MC_E,
+	MC_L,
+	MC_O,
+	MC_W,
+	MC_R,
+	MC_D,
+	MC_INTER_CHAR,
+	MC_INTER_WORD,
+	NUM_MORSE_COMMANDS
+};
+
+#define MAX_MORSE_TICK 10
+
+struct MORSE_COMMAND {
+	word_t tick[MAX_MORSE_TICK];
+	word_t pin[MAX_MORSE_TICK];
+	word_t tick_count;
+};
+
+struct MORSE_COMMAND MORSE_CMDS[NUM_MORSE_COMMANDS] = {0};
+
 //-------------------------------------------------------
 
 word_t* FLASH_CTRL_FLASHCFG = NULL;
 
 struct SYS_CTRL_BLOCK* SYSCTRL = NULL;
 
+static void setup_morse() {
+	// H
+	{
+		MORSE_CMDS[MC_H].tick_count = 7;
+			
+		MORSE_CMDS[MC_H].tick[0] = MT_DOT;
+		MORSE_CMDS[MC_H].tick[1] = MT_INTER_DOT;
+
+		MORSE_CMDS[MC_H].tick[2] = MT_DOT;
+		MORSE_CMDS[MC_H].tick[3] = MT_INTER_DOT;
+
+		MORSE_CMDS[MC_H].tick[4] = MT_DOT;
+		MORSE_CMDS[MC_H].tick[5] = MT_INTER_DOT;
+
+		MORSE_CMDS[MC_H].tick[6] = MT_DOT;
+
+		MORSE_CMDS[MC_H].pin[0] = GPIO_PIN_9;
+		MORSE_CMDS[MC_H].pin[1] = 0;
+
+		MORSE_CMDS[MC_H].pin[2] = GPIO_PIN_9;
+		MORSE_CMDS[MC_H].pin[3] = 0;
+
+		MORSE_CMDS[MC_H].pin[4] = GPIO_PIN_9;
+		MORSE_CMDS[MC_H].pin[5] = 0;
+
+		MORSE_CMDS[MC_H].pin[6] = GPIO_PIN_9;
+	}
+
+	// E
+	{
+		MORSE_CMDS[MC_E].tick_count = 1;
+		MORSE_CMDS[MC_E].tick[0] = MT_DOT;
+		MORSE_CMDS[MC_E].pin[0] = GPIO_PIN_9;
+	}
+
+	// L
+	{
+		MORSE_CMDS[MC_L].tick_count = 5;
+
+		MORSE_CMDS[MC_L].tick[0] = MT_DOT;
+		MORSE_CMDS[MC_L].tick[1] = MT_DASH;
+		MORSE_CMDS[MC_L].tick[2] = MT_DOT;
+		
+		MORSE_CMDS[MC_L].tick[3] = MT_INTER_DOT;
+
+		MORSE_CMDS[MC_L].tick[4] = MT_DOT;
+
+		MORSE_CMDS[MC_L].pin[0] = GPIO_PIN_9;
+		MORSE_CMDS[MC_L].pin[1] = GPIO_PIN_9;
+		MORSE_CMDS[MC_L].pin[2] = GPIO_PIN_9;
+
+		MORSE_CMDS[MC_L].pin[3] = 0;
+
+		MORSE_CMDS[MC_L].pin[4] = GPIO_PIN_9;
+	}
+	
+	// inter char
+	{
+		MORSE_CMDS[MC_INTER_CHAR].tick_count = 1;
+		MORSE_CMDS[MC_INTER_CHAR].tick[0] = MT_INTER_CHAR;
+		MORSE_CMDS[MC_INTER_CHAR].pin[0] = 0;
+	}
+
+	// inter word
+	{
+		MORSE_CMDS[MC_INTER_WORD].tick_count = 1;
+		MORSE_CMDS[MC_INTER_WORD].tick[0] = MT_INTER_WORD;
+		MORSE_CMDS[MC_INTER_WORD].pin[0] = 0;
+	}
+}
+
+void sleep(word_t millisec) {
+	const word_t TICK = 1000; // 1 millisecond in microseconds
+	const word_t STEP = millisec * TICK;
+
+	volatile word_t counter = 0;
+	while (counter < STEP) {
+		counter++;
+	}
+}
+
+static void write_morse_command(word_t index) {
+	struct MORSE_COMMAND* m = &MORSE_CMDS[index];
+
+	volatile word_t counter = 0;
+	
+	while (counter < m->tick_count) {
+		GPIO[1]->data[GPIO_PIN_9] = m->pin[counter];
+		sleep(m->tick[counter]);
+		
+		counter++;
+	}
+}
+
+// clock notes:
+// internal RC oscillator is 12 MHz
+// crystal oscillator is 1 MHz to 25 MHz
+// watchdog oscillator is 7.8 kHz to 1.8 MHz
+
 static void setup() {
+	// setup morse code info
+	setup_morse();
+			
 	SYSCTRL = (struct SYS_CTRL_BLOCK*)SYS_CTRL_BLOCK_ADDR;
 	
 	// phase locked loop
@@ -138,23 +273,13 @@ void reset() {
 	GPIO[1]->io_dir |= GPIO_PIN_9;
 	
 	while (True) {
-		asm("nop");
-		asm("nop");
-		asm("nop");
-
-		volatile word_t counter = 0;
-
-		while (counter < MAX_STEP) {
-			counter++;
-		}
-
-		GPIO[1]->data[GPIO_PIN_9] = 0;
-
-		counter = 0;
-		while (counter < MAX_STEP) {
-			counter++;
-		}
-
-		GPIO[1]->data[GPIO_PIN_9] = 0xFFFFFFFF;
+		write_morse_command(MC_H);
+		write_morse_command(MC_INTER_CHAR);
+		write_morse_command(MC_E);
+		write_morse_command(MC_INTER_CHAR);
+		write_morse_command(MC_L);
+		write_morse_command(MC_INTER_CHAR);
+		write_morse_command(MC_L);
+		write_morse_command(MC_INTER_WORD);
 	}
 }
