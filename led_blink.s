@@ -205,17 +205,23 @@ Disassembly of section .text:
  14c:   e002            b.n     154 <Reset_handler+0x94>
 
 ;;; loop begin (same loop as before)
-;;; 
- 14e:   687b            ldr     r3, [r7, #4]
- 150:   3301            adds    r3, #1
- 152:   607b            str     r3, [r7, #4]
+;;; total is approximately 10 cycles
+    
+;;; 5 cycles here
+ 14e:   687b            ldr     r3, [r7, #4] ; 2 cycles
+ 150:   3301            adds    r3, #1       ; 1 cycle
+ 152:   607b            str     r3, [r7, #4] ; 2 cycles
 
 ;;; branched here from 14c - loop entry
+;;; pipelined memory access, so these two loads
+;;; should take 3 cycles
  154:   687a            ldr     r2, [r7, #4] ; read loop counter (will be 0 on first branch)
  156:   683b            ldr     r3, [r7, #0] ; read in max count (will be 1_000_000 on first branch)
- 
- 158:   429a            cmp     r2, r3
- 15a:   d3f8            bcc.n   14e <Reset_handler+0x8e>
+
+;;;
+;;; 2 cycles here
+ 158:   429a            cmp     r2, r3 ; 1 cycle
+ 15a:   d3f8            bcc.n   14e <Reset_handler+0x8e> ; 1 cycle
 ;;; loop end
 ;;;
 ;;; 
