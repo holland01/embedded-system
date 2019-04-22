@@ -1,21 +1,30 @@
+#include "gpio.h"
+
 #define ATTR(s) __attribute__((s))
-#define THUMB(x) ((unsigned)(x) + 1)
+#define FPTR(x) ((word_t)(x) + 1)
 
 extern void hardfault() ATTR(weak);
 extern void NMI() ATTR(weak);
 extern void reset();
 
-extern unsigned __INITIAL_SP;
-extern unsigned __VECTOR_CHECKSUM;
+extern word_t __INITIAL_SP;
+extern word_t __VECTOR_CHECKSUM;
 
-unsigned int vector[8] ATTR(section(".vector"))
+word_t vector[8] ATTR(section(".vector"))
 	= {
-	THUMB(&__INITIAL_SP),
-	THUMB(reset),
-	THUMB(NMI),
-	THUMB(hardfault),
+	&__INITIAL_SP,
+	FPTR(reset),
+	FPTR(NMI),
+	FPTR(hardfault),
 	0,
 	0,
 	0,
-	THUMB(&__VECTOR_CHECKSUM)
+	FPTR(&__VECTOR_CHECKSUM)
+};
+
+struct GPIO* gpio[GPIO_NUM_PORTS] = {
+	(struct GPIO*) GPIO_PORT_0,
+	(struct GPIO*) GPIO_PORT_1,
+	(struct GPIO*) GPIO_PORT_2,
+	(struct GPIO*) GPIO_PORT_3
 };
