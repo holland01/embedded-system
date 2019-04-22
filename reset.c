@@ -132,13 +132,29 @@ static void setup() {
 void reset() {
 	setup();
 
-	volatile word_t counter = 0;
+	const word_t MAX_STEP = 0x000f4240; // 1_000_000
+	
+	// set pin 9 as output
+	GPIO[1]->io_dir |= GPIO_PIN_9;
 	
 	while (True) {
 		asm("nop");
 		asm("nop");
 		asm("nop");
-		asm("nop");
-		counter++;
+
+		volatile word_t counter = 0;
+
+		while (counter < MAX_STEP) {
+			counter++;
+		}
+
+		GPIO[1]->data[GPIO_PIN_9] = 0;
+
+		counter = 0;
+		while (counter < MAX_STEP) {
+			counter++;
+		}
+
+		GPIO[1]->data[GPIO_PIN_9] = 0xFFFFFFFF;
 	}
 }
