@@ -16,6 +16,13 @@
 
 typedef unsigned word_t;
 
+typedef unsigned bool_t;
+
+enum {
+	True = 1,
+	False = 0
+};
+
 enum GPIO_REG_OFFSETS_ {
 	GRO_DATA_ADDR_START = 0x0,
 	GRO_DATA_ADDR_END = GPIO_OFS(0x3FF8),
