@@ -138,6 +138,19 @@ static void setup_morse() {
 
 		MORSE_CMDS[MC_L].pin[4] = GPIO_PIN_9;
 	}
+
+	// O
+	{
+		MORSE_CMDS[MC_O].tick_count = 3;
+
+		MORSE_CMDS[MC_O].tick[0] = MT_DASH;
+		MORSE_CMDS[MC_O].tick[1] = MT_DASH;
+		MORSE_CMDS[MC_O].tick[2] = MT_DASH;
+
+		MORSE_CMDS[MC_O].pin[0] = GPIO_PIN_9;
+		MORSE_CMDS[MC_O].pin[1] = GPIO_PIN_9;
+		MORSE_CMDS[MC_O].pin[2] = GPIO_PIN_9;
+	}
 	
 	// inter char
 	{
