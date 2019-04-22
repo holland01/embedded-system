@@ -16,9 +16,6 @@ enum SYS_CTRL_BLOCK_REG_OFFSETS {
 };
 
 #define SYS_CTRL_MAIN_CLOCK_SRC_SEL_PLL_OUT 0x3
-#define SYS_CTRL_MAIN_CLOCK_SRC_UPDATE 0x1
-
-#define SYS_CTRL_PLL_CLOCK_SRC_UPDATE 0x1
 
 #define SYS_CTRL_PWR_DOWN_CFG_RESERVED_MASK			\
 	((1 << 8) | (0 << 9) | (1 << 10) | (1 << 11) |	\
@@ -44,8 +41,9 @@ enum CLOCK_SOURCE_SELECT_ {
 //------------------------------------------------------------
 
 #define FLASH_CTRL_BLOCK_ADDR 0x4003C000
-#define FLASH_CTRL_FLASHCFG_OF FSET REG_OFFSET(0x10)
-
+#define FLASH_CTRL_FLASHCFG_OFFSET REG_OFFSET(0x10)
+#define FLASH_CTRL_MEMORY_ACCESS_TIME_2 0x1
+			
 //-------------------------------------------------------
 
 static word_t* FLASH_CTRL_FLASHCFG =
@@ -72,12 +70,16 @@ static void setup() {
 			SYSCTRL->data[SYS_CTRL_PLL_CTRL] = pll_ctrl;
 		}
 
-		// power down the phase locked loop (why????)
+		// disable power down for the phase locked loop,
+		// (see 3.11.2).
+		// when power down happens, dividers enter reset state and oscillator
+		// is stopped, among other things.
+		// this is supposed to give the pll power
 		{
 			volatile word_t power_down = SYSCTRL->data[SYS_CTRL_PWR_DOWN_CFG];
 		
 			// set system phase locked loop
-			// state to "powered down"
+			// state to "powered"
 			power_down &= ~(0x80);
 
 			SYSCTRL->data[SYS_CTRL_PWR_DOWN_CFG] = power_down;
@@ -85,14 +87,42 @@ static void setup() {
 
 	
 		// update pll clock src config,
-		// maybe to power down the phase locked loop
-		SYSCTRL->data[SYS_CTRL_PLL_CLOCK_SRC_UPDATE] |= SYS_CTRL_PLL_CLOCK_SRC_UPDATE;
+		// since we've changed a number of its
+		// settings
+		SYSCTRL->data[SYS_CTRL_PLL_CLOCK_SRC_UPDATE] |= True;
 	}
-	
-	
+
+	// set flash control memory access time to
+	// 2 system clocks
+	{
+		word_t flash = *FLASH_CTRL_FLASHCFG;
+
+		flash |= FLASH_CTRL_MEMORY_ACCESS_TIME_2;
+		
+		*FLASH_CTRL_FLASHCFG = flash;
+	}
+
+	// loop until phase lock status
+	// is set (i.e., the frequency has been appropriately updated) (see 3.11.1)
+	{
+		while (SYSCTRL->data[SYS_CTRL_PLL_STATUS] == False) {
+			asm("nop");
+		}
+	}
+
+	// main system clock
+	{
+		// take the input from the output of the PLL
+		SYSCTRL->data[SYS_CTRL_MAIN_CLOCK_SRC_SEL] |= SYS_CTRL_MAIN_CLOCK_SRC_SEL_PLL_OUT;
+
+		// notify hardware we've updated the clock source
+		SYSCTRL->data[SYS_CTRL_MAIN_CLOCK_SRC_UPDATE] |= True;
+	}
 }
 
 void reset() {
+	setup();
+
 	volatile word_t counter = 0;
 	
 	while (True) {

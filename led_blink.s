@@ -70,9 +70,9 @@ Disassembly of section .text:
 ;;; which means that
 ;;; the power down register's bit 7
 ;;; is set to 0, while the rest is preserved.
-;;; bit 7 is SYPLL_PD, and a value of 0 means "powered down".
+;;; bit 7 is SYPLL_PD, and a value of 0 means "powered".
 ;;; store the register value in r2.
-;;; 
+;;; in a nutshell, the PLL is turned on here.
   de:   4924            ldr     r1, [pc, #144]  ; (170 <Reset_handler+0xb0>)
   e0:   2280            movs    r2, #128        ; 0x80
   e2:   4393            bics    r3, r2
