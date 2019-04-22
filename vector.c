@@ -10,8 +10,7 @@ extern void reset();
 extern word_t __INITIAL_SP;
 extern word_t __VECTOR_CHECKSUM;
 
-word_t vector[8] ATTR(section(".vector"))
-	= {
+word_t vector[8] ATTR(section(".vector")) = {
 	(word_t)&__INITIAL_SP,
 	FPTR(reset),
 	FPTR(NMI),
@@ -29,8 +28,12 @@ struct GPIO* gpio[GPIO_NUM_PORTS] = {
 	(struct GPIO*) GPIO_PORT_3
 };
 
+static volatile bool_t default_hardfault_loop = True;
+
 void default_hardfault() {
-	
+	while (default_hardfault_loop) {
+		
+	}
 }
 
 void default_NMI() {
