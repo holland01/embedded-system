@@ -21,11 +21,11 @@ word_t vector[8] ATTR(section(".vector")) = {
 	(word_t)&__VECTOR_CHECKSUM
 };
 
-struct GPIO* gpio[GPIO_NUM_PORTS] = {
-	(struct GPIO*) GPIO_PORT_0,
-	(struct GPIO*) GPIO_PORT_1,
-	(struct GPIO*) GPIO_PORT_2,
-	(struct GPIO*) GPIO_PORT_3
+struct GPIO_CTRL* GPIO[GPIO_NUM_PORTS] = {
+	NULL,
+	NULL,
+	NULL,
+	NULL
 };
 
 static volatile bool_t default_hardfault_loop = True;

@@ -46,12 +46,13 @@ enum CLOCK_SOURCE_SELECT_ {
 			
 //-------------------------------------------------------
 
-static word_t* FLASH_CTRL_FLASHCFG =
-	((word_t*)FLASH_CTRL_BLOCK_ADDR) + FLASH_CTRL_FLASHCFG_OFFSET;
+word_t* FLASH_CTRL_FLASHCFG = NULL;
 
-static struct SYS_CTRL_BLOCK* SYSCTRL = (struct SYS_CTRL_BLOCK*)(SYS_CTRL_BLOCK_ADDR);
+struct SYS_CTRL_BLOCK* SYSCTRL = NULL;
 
 static void setup() {
+	SYSCTRL = (struct SYS_CTRL_BLOCK*)SYS_CTRL_BLOCK_ADDR;
+	
 	// phase locked loop
 	{
 		// set the system pll clock source to be the IRC oscillator
@@ -95,6 +96,8 @@ static void setup() {
 	// set flash control memory access time to
 	// 2 system clocks
 	{
+		FLASH_CTRL_FLASHCFG = ((word_t*)FLASH_CTRL_BLOCK_ADDR) + FLASH_CTRL_FLASHCFG_OFFSET;
+		
 		word_t flash = *FLASH_CTRL_FLASHCFG;
 
 		flash |= FLASH_CTRL_MEMORY_ACCESS_TIME_2;
@@ -118,6 +121,12 @@ static void setup() {
 		// notify hardware we've updated the clock source
 		SYSCTRL->data[SYS_CTRL_MAIN_CLOCK_SRC_UPDATE] |= True;
 	}
+
+	// set GPIO values
+	GPIO[0] = (struct GPIO_CTRL*) GPIO_PORT_0;
+	GPIO[1] = (struct GPIO_CTRL*) GPIO_PORT_1;
+	GPIO[2] = (struct GPIO_CTRL*) GPIO_PORT_2;
+	GPIO[3] = (struct GPIO_CTRL*) GPIO_PORT_3;
 }
 
 void reset() {
@@ -126,6 +135,10 @@ void reset() {
 	volatile word_t counter = 0;
 	
 	while (True) {
+		asm("nop");
+		asm("nop");
+		asm("nop");
+		asm("nop");
 		counter++;
 	}
 }

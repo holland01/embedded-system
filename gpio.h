@@ -52,7 +52,7 @@ enum GPIO_PINS_ {
 	decl : 12;\
 	word_t :0
 
-struct GPIO {
+struct GPIO_CTRL {
 	word_t data[1 << 12];
 	word_t unused[1 << 12];
 
@@ -66,6 +66,6 @@ struct GPIO {
 	GPIO_REG(word_t int_clear);
 };
 
-extern struct GPIO* gpio[GPIO_NUM_PORTS];
+extern struct GPIO_CTRL* GPIO[GPIO_NUM_PORTS];
 
 #endif // __GPIO_H__
