@@ -52,7 +52,7 @@ Disassembly of section .text:
 ;;;  set feedback divider value of System PLL control register to
 ;;;  4 [4:0],
 ;;;  and set post divider ratio of system pll control register to
-;;;  4 [6:5]
+;;;  2 [6:5]
   d0:   4b27            ldr     r3, [pc, #156]  ; reads in 0x40048000 (this is a pointer (170 <Reset_handler+0xb0>)
   d2:   2223            movs    r2, #35 ; 0x23
   d4:   609a            str     r2, [r3, #8]    ; write 0x23 to *(0x40048000 + 8)
@@ -123,11 +123,15 @@ Disassembly of section .text:
 ;;; ----
 ;;; END PLL CHECK
 ;;; ----
-    
+;;; set the main system clock to
+;;; the output from the system phase locked loop
  108:   4b19            ldr     r3, [pc, #100]  ; (170 <Reset_handler+0xb0>)
  10a:   2203            movs    r2, #3
-;;; 
  10c:   671a            str     r2, [r3, #112]  ; 0x70
+;;; update the clock src, since we've just changed
+;;; the source we wish for it to receive input from.
+;;; odd: data sheet (3.5.12) says that a zero should be written
+;;; to the register first, before a one is.
  10e:   4b18            ldr     r3, [pc, #96]   ; (170 <Reset_handler+0xb0>)
  110:   2201            movs    r2, #1
  112:   675a            str     r2, [r3, #116]  ; 0x74
