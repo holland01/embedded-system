@@ -1,11 +1,13 @@
 CC := gcc-arm
 LD := ld-arm
 
-FLAGS := -g -I. -O0
+INCLUDE=./include
+
+FLAGS := -g -I$(INCLUDE) -O0
 TARGET := hello
 
-SRC=.
-OBJ=.
+SRC=./src
+OBJ=./obj
 
 SOURCES := $(wildcard $(SRC)/*.c)
 OBJECTS := $(patsubst $(SRC)/%.c, $(OBJ)/%.o, $(SOURCES))
@@ -15,4 +17,9 @@ $(TARGET): $(OBJECTS)
 
 $(OBJ)/%.o: $(SRC)/%.c
 	$(CC) $(FLAGS) -c $< -o $@
+
+clean:
+	rm -f $(INCLUDE)/~*
+	rm -f $(SRC)/~*
+	rm -f $(OBJ)/*.o
 

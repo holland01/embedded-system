@@ -1,6 +1,8 @@
 #ifndef __FLASHCTRL_H__
 #define __FLASHCTRL_H__
 
+#include "common.h"
+
 #define FLASH_CTRL_BLOCK_ADDR 0x4003C000
 #define FLASH_CTRL_FLASHCFG_OFFSET REG_OFFSET(0x10)
 #define FLASH_CTRL_MEMORY_ACCESS_TIME_2 0x1

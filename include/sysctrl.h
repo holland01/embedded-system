@@ -1,6 +1,8 @@
 #ifndef __SYSCTRL_H__
 #define __SYSCTRL_H__
 
+#include "common.h"
+
 #define SYS_CTRL_DATA_LEN (0x3F8 >> 2)
 
 #define SYS_CTRL_BLOCK_ADDR 0x40048000
