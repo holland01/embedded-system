@@ -1,6 +1,0 @@
-#!/bin/bash
-
-gcc-arm -g -I. -c reset.c
-gcc-arm -g -I. -c vector.c
-
-ld-arm -T lpc1114.ld -o hello vector.o reset.o
