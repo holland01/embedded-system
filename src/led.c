@@ -160,13 +160,6 @@ void led_blink_morse(const char* str) {
 	while (*p != '\0') {
 		blink_morse_command(*p);
 
-		/* if *p isn't a space, it's a character,
-		 * so we infer an inter-character wait
-		 */
-		if (*p != ' ') {
-			blink_morse_command('_');
-		}
-
 		p++;
 	}
 }

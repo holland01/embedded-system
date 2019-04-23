@@ -12,6 +12,6 @@ void setup() {
 }
 
 void loop() {
-	led_blink_morse("HELLO WORLD");
+	led_blink_morse("H_E_L_L_O W_O_R_L_D");
 	sleep(5000);
 }
