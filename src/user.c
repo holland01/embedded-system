@@ -13,10 +13,5 @@ void setup() {
 
 void loop() {
 	led_blink_morse("HELLO WORLD");
-	/*
-	led_on();
-	sleep(1000);
-	led_off();
-	sleep(3000);
-	*/
+	sleep(5000);
 }

@@ -13,5 +13,6 @@ void sleep(word_t millisec) {
 
 	while (counter < STEP) {
 		counter++;
+		//	asm("nop");
 	}
 }

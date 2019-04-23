@@ -43,21 +43,31 @@ static void blink_morse_command(char c) {
 		sleep(MT_DOT);
 
 		led_off();
+		sleep(MT_INTER_DOT);
 		break;
 		
 	case 'E':
-
 		led_on();
 		sleep(MT_DOT);
-
+		
 		led_off();
+		sleep(MT_INTER_DOT);
 		break;
 	
 	case 'L':
 		led_on();
-
 		sleep(MT_DOT);
+
+		led_off();
+		sleep(MT_INTER_DOT);
+
+		led_on();
 		sleep(MT_DASH);
+
+		led_off();
+		sleep(MT_INTER_DOT);
+
+		led_on();
 		sleep(MT_DOT);
 
 		led_off();
@@ -67,6 +77,7 @@ static void blink_morse_command(char c) {
 		sleep(MT_DOT);
 
 		led_off();
+		sleep(MT_INTER_DOT);
 		break;
 
 	case 'O':
@@ -81,8 +92,12 @@ static void blink_morse_command(char c) {
 
 	case 'W':
 		led_on();
-
 		sleep(MT_DOT);
+
+		led_off();
+		sleep(MT_INTER_DOT);
+
+		led_on();
 		sleep(MT_DASH);
 		sleep(MT_DASH);
 
@@ -91,18 +106,32 @@ static void blink_morse_command(char c) {
 
 	case 'R':
 		led_on();
-
-		sleep(MT_DOT);
-		sleep(MT_DASH);
 		sleep(MT_DOT);
 
 		led_off();
+		sleep(MT_INTER_DOT);
+
+		led_on();
+		sleep(MT_DASH);
+
+		led_off();
+		sleep(MT_INTER_DOT);
+
+		led_on();
+		sleep(MT_DOT);
+
+		led_off();
+		sleep(MT_INTER_DOT);
 		break;
 
 	case 'D':
 		led_on();
-
 		sleep(MT_DASH);
+
+		led_off();
+		sleep(MT_INTER_DOT);
+
+		led_on();
 		sleep(MT_DOT);
 
 		led_off();
@@ -112,6 +141,7 @@ static void blink_morse_command(char c) {
 		sleep(MT_DOT);
 
 		led_off();
+		sleep(MT_INTER_DOT);
 		break;
 		
 	case '_':
