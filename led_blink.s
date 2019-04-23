@@ -206,7 +206,6 @@ Disassembly of section .text:
 
 ;;; loop begin (same loop as before)
 ;;; total is approximately 10 cycles
-    
 ;;; 5 cycles here
  14e:   687b            ldr     r3, [r7, #4] ; 2 cycles
  150:   3301            adds    r3, #1       ; 1 cycle
