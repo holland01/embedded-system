@@ -1,20 +1,20 @@
 #include "gpio.h"
 
-#define ATTR(...) __attribute__((__VA_ARGS__))
-#define FPTR(x) ((word_t)(x) + 1)
+#define FUNC_ADDR(x) ((word_t)(x) + 1)
 
-extern void hardfault() ATTR(weak, alias("default_hardfault"));
-extern void NMI() ATTR(weak, alias("default_NMI"));
+extern void hardfault() __attribute__((weak, alias("default_hardfault")));									  
+extern void NMI() __attribute__((weak, alias("default_NMI")));
+								
 extern void reset();
 
 extern word_t __INITIAL_SP;
 extern word_t __VECTOR_CHECKSUM;
 
-word_t vector[8] ATTR(section(".vector")) = {
+word_t vector[8] __attribute__((section(".vector"))) = {
 	(word_t)&__INITIAL_SP,
-	FPTR(reset),
-	FPTR(NMI),
-	FPTR(hardfault),
+	FUNC_ADDR(reset),
+	FUNC_ADDR(NMI),
+	FUNC_ADDR(hardfault),
 	0,
 	0,
 	0,
@@ -28,14 +28,13 @@ struct GPIO_CTRL* GPIO[GPIO_NUM_PORTS] = {
 	NULL
 };
 
-static volatile bool_t default_hardfault_loop = True;
-
 void default_hardfault() {
-	while (default_hardfault_loop) {
-		
+	while (True) {
+		asm("nop");
 	}
 }
 
 void default_NMI() {
 	
 }
+

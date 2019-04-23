@@ -1,22 +1,47 @@
 #include "common.h"
 #include "gpio.h"
 
-static void setup() {
-	// set GPIO values
-	GPIO[0] = (struct GPIO_CTRL*) GPIO_PORT_0;
-	GPIO[1] = (struct GPIO_CTRL*) GPIO_PORT_1;
-	GPIO[2] = (struct GPIO_CTRL*) GPIO_PORT_2;
-	GPIO[3] = (struct GPIO_CTRL*) GPIO_PORT_3;
-}
+extern word_t __DATA_LMA;
+extern word_t __DATA_END;
+extern word_t __DATA_VMA;
+
+extern word_t __BSS_VMA;
+extern word_t __BSS_END;
+
+extern void setup() __attribute__((weak));
+extern void loop();
 
 void reset() {
-	setup();
+
+	// copy over data segment
+	{
+		word_t* from = &__DATA_LMA; // location in flash
+		word_t* to = &__DATA_VMA; // location in sram
+		word_t* end = &__DATA_END;
 	
-	// set pin 9 as output
-	GPIO[1]->io_dir |= GPIO_PIN_9;
+		while (from != end) {
+			*to = *from;
+			to++;
+			from++;
+		}
+	}
+
+	// zero out bss
+	{
+		word_t* bss = &__BSS_VMA;
+		word_t* bss_end = &__BSS_END;
+
+		while (bss != bss_end) {
+			*bss = 0;
+			bss++;
+		}
+	}
+	
+	if (setup) { 
+		setup();
+	}
 	
 	while (True) {
-		led_blink_morse("HELLO WORLD");
-		sleep(5000);
+		loop();
 	}
 }
