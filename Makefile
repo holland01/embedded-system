@@ -19,7 +19,7 @@ $(OBJ)/%.o: $(SRC)/%.c
 	$(CC) $(FLAGS) -c $< -o $@
 
 clean:
-	rm -f $(INCLUDE)/~*
-	rm -f $(SRC)/~*
+	rm -f $(INCLUDE)/*~
+	rm -f $(SRC)/*~
 	rm -f $(OBJ)/*.o
 
