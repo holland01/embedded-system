@@ -10,11 +10,11 @@ enum /* morse tick values in milliseconds */ {
 	MT_INTER_CHAR = 750
 };
 
-static inline void led_on() {
+void led_on() {
 	GPIO[1]->data[GPIO_PIN_9] = GPIO_PIN_9;
 }
 
-static inline void led_off() {
+void led_off() {
 	GPIO[1]->data[GPIO_PIN_9] = 0;
 }
 
