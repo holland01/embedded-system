@@ -44,9 +44,97 @@ struct IOCON_PIO_8 {
 	unsigned FUNC: 3;
 	unsigned MODE: 2;
 	unsigned HYS : 1;
-	unsigned _RESERVED: 4;
+	unsigned RESERVED: 4;
 	unsigned OD: 1;
 } extern IOCON_PIO_8;
+
+
+struct TMR16 {
+	struct {
+		unsigned MR0 : 1;
+		unsigned MR1 : 1;
+		unsigned MR2 : 1;
+		unsigned MR3 : 1;
+		unsigned CR0 : 1;
+		unsigned : 27;
+	} IR;
+
+	struct {
+		unsigned CEn : 1;
+		unsigned CRst : 1;
+		unsigned : 30;
+	} TCR;
+	
+	unsigned TC : 16;
+	unsigned : 16;  
+
+	unsigned PR : 16;
+	unsigned : 16;
+	
+	unsigned PC : 16;
+	unsigned : 16;
+	
+	struct {
+		unsigned MR0I : 1;
+		unsigned MR0R : 1;
+		unsigned MR0S : 1;
+
+		unsigned MR1I : 1;
+		unsigned MR1R : 1;
+		unsigned MR1S : 1;
+
+		unsigned MR2I : 1;
+		unsigned MR2R : 1;
+		unsigned MR2S : 1;
+
+		unsigned MR3I : 1;
+		unsigned MR3R : 1;
+		unsigned MR3S : 1;
+
+		unsigned : 20;
+	} MCR;
+	
+	unsigned MR0 : 16;
+	unsigned : 16;
+	
+	unsigned MR1 : 16;
+	unsigned : 16;
+	
+	unsigned MR2 : 16;
+	unsigned : 16;
+
+	unsigned MR3 : 16;
+	unsigned : 16;
+
+	struct {
+		unsigned CAP0RE : 1;
+		unsigned CAP0FE : 1;
+		unsigned CAP0I : 1;
+
+		unsigned : 29;
+	} CCR;
+	
+	unsigned CR0 : 16;
+	unsigned : 16;
+
+	unsigned EMR;
+
+	unsigned __RESERVED[12];
+
+	unsigned CTCR;
+	
+	unsigned PWM;
+} extern TMR16B0;
+
+struct IOCON_R_PIO0_11 {
+	unsigned FUNC: 3;
+	unsigned MODE: 2;
+	unsigned HYS: 1;
+	unsigned __RESERVED0: 1;
+	unsigned ADMODE: 1;
+	unsigned __RESERVED1: 2;
+	unsigned OD:
+} extern IOCON_R_PIO_11;
 
 struct SYSCON {
 	unsigned SYSMEMREMAP;          // 0
@@ -98,9 +186,12 @@ struct SYSCON {
 	struct {
 		unsigned UNUSED0 : 7;
 		unsigned CT16B0 : 1;
-		unsigned UNUSED1 : 7;
+		unsigned UNUSED1: 5;
+		unsigned ADC: 1;
+		unsigned RESERVED0 : 1;
+		unsigned WDT: 1;
 		unsigned IOCON: 1;
-		unsigned RESERVED: 16;
+		unsigned RESERVED1: 15;
 	} SYSAHBCLKCTRL;               // 128
 
 	unsigned RESERVED4[4];         // 132, 136, 140, 144
@@ -164,7 +255,9 @@ struct SYSCON {
 	unsigned PDAWAKECFG;           // 564
 	
 	struct {
-		unsigned UNUSED: 7;        
+		unsigned UNUSED0: 4;
+		unsigned ADC : 1;
+		unsigned UNUSED1: 2;        
 		unsigned SYSPLL: 1;
 		unsigned RESERVED: 25; 
 	} PDRUNCFG;                    // 568
