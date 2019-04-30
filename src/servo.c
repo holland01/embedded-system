@@ -20,6 +20,8 @@ static inline void set_pll_ctrl(unsigned MSEL, unsigned PSEL) {
  *  is ISER.
  */
 
+static volatile unsigned* DEBUG_DUMP = 0;
+
 void setup() {
 	
 	SYSCON.SYSPLLCLKSEL    = 0;
@@ -30,8 +32,6 @@ void setup() {
 	set_pll_ctrl(3, 1);
 	
 	SYSCON.SYSPLLCLKUEN    = 1;
-
-	DEBUG_DUMP = (unsigned *) &SYSCON.SYSPLLCTRL;
 	
 	while (!SYSCON.SYSPLLSTAT)
 		asm("");
@@ -49,19 +49,22 @@ void setup() {
 
 	asm("CPSIE i");
 
-	ISER |= 1<<30;
+	ISER |= 1 << 30;
 
 	SYSCON.SYSAHBCLKCTRL.CT16B0 = 1;
 	SYSCON.SYSAHBCLKCTRL.IOCON = 1;
 	SYSCON.SYSAHBCLKCTRL.ADC = 1;
-	
-	//	IOCON_PIO_8.FUNC = 2;
-	//IOCON_PIO
 
-	IOCON_R_PIO_11.FUNC = 2;
-	IOCON_R_PIO_11.ADMODE = 0;
-
+	DEBUG_DUMP = &TMR16B0.PWM;
 	
+	asm volatile("nop");
+	asm volatile("nop");
+	asm volatile("nop");
+	asm volatile("nop");
+	asm volatile("nop");
+	asm volatile("nop");
+	asm volatile("nop");
+	asm volatile("nop");
 }
 /* Loop
  *  Simple loop to blink an LED on PIO1_9.

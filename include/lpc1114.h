@@ -40,101 +40,40 @@ struct GPIO {
 	unsigned : 21;
 } extern GPIO1, GPIO2;
 
-struct IOCON_PIO_8 {
-	unsigned FUNC: 3;
-	unsigned MODE: 2;
-	unsigned HYS : 1;
-	unsigned RESERVED: 4;
-	unsigned OD: 1;
-} extern IOCON_PIO_8;
-
-
-struct TMR16 {
-	struct {
-		unsigned MR0 : 1;
-		unsigned MR1 : 1;
-		unsigned MR2 : 1;
-		unsigned MR3 : 1;
-		unsigned CR0 : 1;
-		unsigned : 27;
-	} IR;
-
-	struct {
-		unsigned CEn : 1;
-		unsigned CRst : 1;
-		unsigned : 30;
-	} TCR;
+volatile struct TMR16 {
+	unsigned IR;
 	
-	unsigned TC : 16;
-	unsigned : 16;  
-
-	unsigned PR : 16;
-	unsigned : 16;
+	unsigned TCR;
 	
-	unsigned PC : 16;
-	unsigned : 16;
+	unsigned TC;  
+
+	unsigned PR;
 	
-	struct {
-		unsigned MR0I : 1;
-		unsigned MR0R : 1;
-		unsigned MR0S : 1;
-
-		unsigned MR1I : 1;
-		unsigned MR1R : 1;
-		unsigned MR1S : 1;
-
-		unsigned MR2I : 1;
-		unsigned MR2R : 1;
-		unsigned MR2S : 1;
-
-		unsigned MR3I : 1;
-		unsigned MR3R : 1;
-		unsigned MR3S : 1;
-
-		unsigned : 20;
-	} MCR;
+	unsigned PC;
 	
-	unsigned MR0 : 16;
-	unsigned : 16;
+    unsigned MCR;
 	
-	unsigned MR1 : 16;
-	unsigned : 16;
+	unsigned MR0;
 	
-	unsigned MR2 : 16;
-	unsigned : 16;
-
-	unsigned MR3 : 16;
-	unsigned : 16;
-
-	struct {
-		unsigned CAP0RE : 1;
-		unsigned CAP0FE : 1;
-		unsigned CAP0I : 1;
-
-		unsigned : 29;
-	} CCR;
+	unsigned MR1;
 	
-	unsigned CR0 : 16;
-	unsigned : 16;
+	unsigned MR2;
 
+	unsigned MR3;
+
+	unsigned CCR;
+	
+	unsigned CR0;
+
+	unsigned __PADDING[3];
+	
 	unsigned EMR;
-
 	unsigned __RESERVED[12];
 
 	unsigned CTCR;
 	
 	unsigned PWM;
 } extern TMR16B0;
-
-struct IOCON_R_PIO0_11 {
-	unsigned FUNC: 3;
-	unsigned MODE: 2;
-	unsigned HYS: 1;
-	unsigned __RESERVED0: 1;
-	unsigned ADMODE: 1;
-	unsigned __RESERVED1: 2;
-	unsigned OD:
-} extern IOCON_R_PIO_11;
 
 struct SYSCON {
 	unsigned SYSMEMREMAP;          // 0
