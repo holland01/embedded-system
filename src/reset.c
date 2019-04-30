@@ -1,5 +1,5 @@
 #include "common.h"
-#include "gpio.h"
+#include "lpc1114.h"
 
 extern word_t __DATA_LMA;
 extern word_t __DATA_END;

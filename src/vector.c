@@ -1,14 +1,12 @@
-#include "gpio.h"
-
-#define FUNC_ADDR(x) ((word_t)(x) + 1)
+#define FUNC_ADDR(x) ((unsigned)(x) + 1)
 
 extern void hardfault() __attribute__((weak, alias("default_hardfault")));									  
 extern void NMI() __attribute__((weak, alias("default_NMI")));
 								
 extern void reset();
 
-extern word_t __INITIAL_SP;
-extern word_t __VECTOR_CHECKSUM;
+extern unsigned __INITIAL_SP;
+extern unsigned __VECTOR_CHECKSUM;
 
 #define DEFAULTIRQ __attribute__((weak, alias("default_handler")))
 
@@ -49,8 +47,8 @@ void default_handler() {
 	
 }
 
-word_t vector[40] __attribute__((section(".vector"))) = {
-	(word_t)&__INITIAL_SP,
+unsigned vector[40] __attribute__((section(".vector"))) = {
+	(unsigned)&__INITIAL_SP,
 
 	FUNC_ADDR(reset),
 	FUNC_ADDR(NMI),
@@ -60,7 +58,7 @@ word_t vector[40] __attribute__((section(".vector"))) = {
 	0,
 	0,
 
-	(word_t)&__VECTOR_CHECKSUM,
+	(unsigned)&__VECTOR_CHECKSUM,
 	
 	FUNC_ADDR(IRQ0),
 	FUNC_ADDR(IRQ1),
@@ -96,15 +94,8 @@ word_t vector[40] __attribute__((section(".vector"))) = {
 	FUNC_ADDR(IRQ31)
 };
 
-struct GPIO_CTRL* GPIO[GPIO_NUM_PORTS] = {
-	NULL,
-	NULL,
-	NULL,
-	NULL
-};
-
 void default_hardfault() {
-	while (True) {
+	while (1) {
 		asm("nop");
 	}
 }

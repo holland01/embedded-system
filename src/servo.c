@@ -10,17 +10,33 @@
  *  is ISER.
  */
 
+static unsigned *DEBUG_DUMP = 0;
+
 void setup() {
+	
 	SYSCON.SYSPLLCLKSEL    = 0;
 	SYSCON.PDRUNCFG.SYSPLL = 0;
+	
 	SYSCON.SYSPLLCTRL.MSEL = 3;
 	SYSCON.SYSPLLCTRL.PSEL = 1;
+
+	// this must be explicitly zero'd out,
+	// otherwise the compiler will write a
+	// 1 to one of the reserved bits.
+	SYSCON.SYSPLLCTRL.RESERVED = 0; 
+	
 	SYSCON.SYSPLLCLKUEN    = 1;
+
+	DEBUG_DUMP = (unsigned *) &SYSCON.SYSPLLCTRL;
+	
 	while (!SYSCON.SYSPLLSTAT)
 		asm("");
+
 	SYSCON.MAINCLKSEL = 3;
 	SYSCON.MAINCLKUEN = 1;
+
 	GPIO1.DIR |=  PIO_9;
+
 	GPIO1.DIR &= ~PIO_8;
 	GPIO1.IS  &= ~PIO_8;
 	GPIO1.IBE &= ~PIO_8;
@@ -32,19 +48,32 @@ void setup() {
 	ISER |= 1<<30;
 
 	SYSCON.SYSAHBCLKCTRL.CT16B0 = 1;
-	
+
 }
 /* Loop
  *  Simple loop to blink an LED on PIO1_9.
  */
 #define COUNT 120000
 void loop() {
-	GPIO1.DATA[PIO_9] = PIO_9;
-	for(int i = 0; i < COUNT; ++i)
-		asm("");
-	GPIO1.DATA[PIO_9] = 0;
-	for(int i = 0; i < COUNT; ++i)
-		asm("");
+	volatile int k = 0;
+
+	asm volatile(
+		"mov r0, #0xFF\n\t"
+		"mov r1, #0x1F\n\t"
+		"bic r0, r1\n\t"
+		"mov %[result], r0"
+		: [result] "=r" (k)
+		);
+
+	if (k == 0xe0) {
+		GPIO1.DATA[PIO_9] = PIO_9;
+		for(int i = 0; i < COUNT; ++i)
+			asm("");
+	}
+
+	//GPIO1.DATA[PIO_9] = 0;
+	//for(int i = 0; i < COUNT; ++i)
+	//	asm("");
 }
 
 /* IRQ30
@@ -55,7 +84,7 @@ void loop() {
  *  index into the speeds array.
  */
 const
-Struct {
+struct {
 	unsigned MSEL;
 	unsigned PSEL;
 } speeds [] =

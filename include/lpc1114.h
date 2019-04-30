@@ -19,19 +19,25 @@ struct GPIO {
 	unsigned UNUSED[1 << 12];
 
 	unsigned DIR: 11;
-	unsigned DIR_R: 0;
+	unsigned : 21;
 
 	unsigned IS: 11;
-	unsigned IS_R: 0;
+	unsigned : 21;
 
 	unsigned IBE: 11;
-	unsigned IBE_R: 0;
+	unsigned : 21;
 
 	unsigned IEV: 11;
-	unsigned IEV_R: 0;
+	unsigned : 21;
 
 	unsigned IE: 11;
-	unsigned IE_R: 0;
+	unsigned : 21;
+
+	unsigned RIS;
+	unsigned MIS;
+	
+	unsigned IC: 11;
+	unsigned : 21;
 } extern GPIO1, GPIO2;
 
 struct IOCON_PIO_8 {
@@ -43,106 +49,125 @@ struct IOCON_PIO_8 {
 } extern IOCON_PIO_8;
 
 struct SYSCON {
-	unsigned SYSMEMREMAP;
+	unsigned SYSMEMREMAP;          // 0
 
-	unsigned PRESETCTRL;
+	unsigned PRESETCTRL;           // 4
+
+	//    unsigned SYSPLLCTRL;           // 8
 
 	struct {
-		unsigned MSEL : 5:
+		unsigned MSEL : 5;
 		unsigned PSEL : 2;
-		unsigned UNUSED : 0;
+		unsigned RESERVED : 25;
 	} SYSPLLCTRL;
-
-	unsigned SYSPLLSTAT: 1;
-	unsigned SYSPLLSTAT_R: 0;
-
-	unsigned RESERVED0[4];
 	
-	unsigned SYSOSCCTRL;
-	unsigned WDTOSCCTRL;
-	unsigned IRCCTRL;
-	
-	unsigned RESERVED1;
+	unsigned SYSPLLSTAT: 1;        // 12
+	unsigned SYSPLLSTAT_R: 31;
 
-	unsigned SYSRSTSTAT;
+	unsigned RESERVED0[4];         // 16, 20, 24, 28
 	
-	unsigned RESERVED2[3];
+	unsigned SYSOSCCTRL;           // 32
+	unsigned WDTOSCCTRL;           // 36
+	unsigned IRCCTRL;              // 40
+	
+	unsigned RESERVED1;            // 44
+
+	unsigned SYSRSTSTAT;           // 48
+	
+	unsigned RESERVED2[3];         // 52, 56, 60
 		
-	unsigned SYSPLLCLKSEL: 2;
-	unsigned SYSPLLCLKSEL_R: 0;
+	unsigned SYSPLLCLKSEL: 2;      // 64
+	unsigned SYSPLLCLKSEL_R: 30;
 
-	unsigned SYSPLLCLKUEN: 1;
-	unsigned SYSPLLCLKUEN_R: 0;
+	unsigned SYSPLLCLKUEN: 1;      // 68
+	unsigned SYSPLLCLKUEN_R: 31;
+
+	unsigned __RESERVED3[10];      // 72, 76, 80, 84, 88
+                                   // 92, 96, 100, 104, 108
 	
-	unsigned MAINCLKSEL:2;
-	unsigned MAINCLKSEL_R: 0;
+	unsigned MAINCLKSEL:2;         // 112
+	unsigned MAINCLKSEL_R: 30;
 	
-	unsigned MAINCLKUEN: 1;
-	unsigned MAINCLKUEN_R: 0;
+	unsigned MAINCLKUEN: 1;        // 116
+	unsigned MAINCLKUEN_R: 31;
 
-	unsigned SYSAHBCLKDIV;
+	unsigned SYSAHBCLKDIV;         // 120
 
-	unsigned RESERVED3;
+	unsigned RESERVED3;            // 124
 	
 	struct {
 		unsigned UNUSED0 : 7;
 		unsigned CT16B0 : 1;
 		unsigned UNUSED1 : 7;
 		unsigned IOCON: 1;
-		unsigned UNUSED2: 0;
-	} SYSAHBCLKCTRL;
+		unsigned RESERVED: 16;
+	} SYSAHBCLKCTRL;               // 128
 
-	unsigned RESERVED4[4];
+	unsigned RESERVED4[4];         // 132, 136, 140, 144
+	 
+	unsigned SSP0CLKDIV;           // 148
+	unsigned UARTCLKDIV;           // 152
+	unsigned SSP1CLKDIV;           // 156
+
+	unsigned RESERVED5[12];        // 160, 164, 168, 172
+	                               // 176, 180, 184, 188
+	                               // 192, 196, 200, 204
+
+	unsigned WDTCLKSEL;            // 208
+	unsigned WDTCLKUEN;            // 212
+	unsigned WDTCLKDIV;            // 216
+
+	unsigned RESERVED6;            // 220
+
+	unsigned CLKOUTCLKSEL;         // 224
+	unsigned CLKOUTUEN;            // 228
+	unsigned CLKOUTCLKDIV;         // 232
+
+	unsigned RESERVED7[5];         // 236, 240, 244, 248
+	                               // 252
 	
-	unsigned SSP0CLKDIV;
-	unsigned UARTCLKDIV;
-	unsigned SSP1CLKDIV;
+	unsigned PIOPORCAP0;           // 256
+	unsigned PIOPORCAP1;           // 260
 
-	unsigned RESERVED5[12];
+	unsigned RESERVED8[18];        // 264, 268, 272, 276, 280, 284
+	                               // 288, 292, 296, 300, 304, 308
+	                               // 312, 316, 320, 324, 328, 332
 
-	unsigned WDTCLKSEL;
-	unsigned WDTCLKUEN;
-	unsigned WDTCLKDIV;
+	unsigned BODCTRL;              // 336
+	unsigned SYSTCKCAL;            // 340
 
-	unsigned RESERVED6;
+	unsigned RESERVED9[6];         // 344, 348, 352, 356, 360, 364
 
-	unsigned CLKOUTCLKSEL;
-	unsigned CLKOUTUEN;
-	unsigned CLKOUTCLKDIV;
+	unsigned IRQLATENCY;           // 368
+	unsigned NMISRC;               // 372
 
-	unsigned RESERVED7[5];
+	unsigned RESERVED10[34];       // 376, 380, 384, 388, 392,
+	                               // 396, 400, 404, 408, 412,
+	                               // 416, 420, 424, 428, 432,
+	                               // 436, 440
+	
+	                               // 444, 448
+	                               // 452, 456, 460, 464, 468,
+	                               // 472, 476, 480, 484, 488,
+	                               // 492, 496, 500, 504, 508
 
-	unsigned PIOPORCAP0;
-	unsigned PIOPORCAP1;
+	unsigned STARTAPRP0;           // 512
+	unsigned STARTERP0;            // 516
 
-	unsigned RESERVED8[18];
+	unsigned STARTRSPR0CLR;        // 520
+	unsigned STARTSRP0;            // 524
 
-	unsigned BODCTRL;
-	unsigned SYSTCKCAL;
+	unsigned RESERVED11[8];        // 528, 532, 536, 540
+                                   // 544, 548, 552, 556
 
-	unsigned RESERVED9[6];
-
-	unsigned IRQLATENCY;
-	unsigned NMISRC;
-
-	unsigned RESERVED10[34];
-
-	unsigned STARTAPRP0;
-	unsigned STARTERP0;
-
-	unsigned STARTRSPR0CLR;
-	unsigned STARTSRP0;
-
-	unsigned RESERVED11[8];
-
-	unsigned PDSLEEPCFG;
-	unsigned PDAWAKECFG;
+	unsigned PDSLEEPCFG;           // 560
+	unsigned PDAWAKECFG;           // 564
 	
 	struct {
-		unsigned UNUSED: 6;
+		unsigned UNUSED: 7;        
 		unsigned SYSPLL: 1;
-		unsigned _R: 0; 
-	} PDRUNCFG:
+		unsigned RESERVED: 25; 
+	} PDRUNCFG;                    // 568
 
 	unsigned RESERVED12[110];
 
