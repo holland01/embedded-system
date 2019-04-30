@@ -1,0 +1,10 @@
+#!/bin/bash
+
+root=../openocd/tcl
+
+p=$1
+
+cp $p ${root}/${p}
+
+cd $root
+openocd -f interface/stlink-v2.cfg -f target/lpc11xx.cfg -c "program ${p} verify reset exit"
