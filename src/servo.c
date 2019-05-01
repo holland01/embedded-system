@@ -10,6 +10,8 @@ static inline void set_pll_ctrl(unsigned MSEL, unsigned PSEL) {
 	SYSCON.SYSPLLCTRL.RESERVED = 0; 
 }
 
+#define SET_LOW_16(reg, val) (reg) &= 0xFFFF0000; (reg) |= (val)
+
 /* Setup
  *  There are three primary setup steps: PLL, PIO1_9, and PIO1_8.  The PLL 
  is set
@@ -23,11 +25,14 @@ static inline void set_pll_ctrl(unsigned MSEL, unsigned PSEL) {
 static volatile unsigned* DEBUG_DUMP = 0;
 
 void setup() {
+
+	/*for (int i = 0; i < 100000000; ++i) {
+		asm("nop");
+		}*/
 	
 	SYSCON.SYSPLLCLKSEL    = 0;
-	
 	SYSCON.PDRUNCFG.SYSPLL = 0;
-	SYSCON.PDRUNCFG.ADC = 0;
+	//SYSCON.PDRUNCFG.ADC = 0;
 	
 	set_pll_ctrl(3, 1);
 	
@@ -47,14 +52,33 @@ void setup() {
 	GPIO1.IEV &= ~PIO_8;
 	GPIO1.IE  |=  PIO_8;
 
-	asm("CPSIE i");
+	GPIO1.DATA[PIO_9] = 0;
 
-	ISER |= 1 << 30;
+	asm volatile ("CPSIE i");
+	
+	//	ISER |= 1 << 30;
+	ISER |= 1 << 16;
+	
+	//	SYSCON.SYSAHBCLKCTRL.CT16B0 = 1;
+	//	SYSCON.SYSAHBCLKCTRL.IOCON = 1;
+	//  SYSCON.SYSAHBCLKCTRL.ADC = 1;
 
-	SYSCON.SYSAHBCLKCTRL.CT16B0 = 1;
-	SYSCON.SYSAHBCLKCTRL.IOCON = 1;
-	SYSCON.SYSAHBCLKCTRL.ADC = 1;
+	SYSCON.SYSAHBCLKCTRL |= (1 << 7); /* CT16B0 */
+	
+	SET_LOW_16(TMR16B0.PR, 48);
+	SET_LOW_16(TMR16B0.TC, 0);
+	SET_LOW_16(TMR16B0.PC, 0);
+	SET_LOW_16(TMR16B0.MR0, 20000); /* 20 millisec interval */
 
+	//	TMR16B0.MCR |= (1 << 10); /* MCR.MR3R */
+	//	TMR16B0.MCR |= (1 << 9); /* MCR.MR3I */
+
+	TMR16B0.MCR |= (1 << 0); /* MCR.MR0R */
+	TMR16B0.MCR |= (1 << 1); /* MCR.MR0I */
+
+	
+	TMR16B0.TCR |= 0x1; /* enable counter */
+	
 	DEBUG_DUMP = &TMR16B0.PWM;
 	
 	asm volatile("nop");
@@ -71,6 +95,7 @@ void setup() {
  */
 #define COUNT 120000
 void loop() {
+	#if 0
 	volatile int k = 0;
 
 	asm volatile(
@@ -86,10 +111,18 @@ void loop() {
 		for(int i = 0; i < COUNT; ++i)
 			asm("");
 	}
+	#endif
 
-	//GPIO1.DATA[PIO_9] = 0;
-	//for(int i = 0; i < COUNT; ++i)
-	//	asm("");
+	asm volatile("wfi");
+}
+
+static volatile int hit = 0;
+
+void IRQ16() {
+	TMR16B0.IR |= (1 << 0); /* reset interrupt on MR3 */
+	GPIO1.DATA[PIO_9] ^= PIO_9;
+
+	hit++;
 }
 
 /* IRQ30
@@ -99,6 +132,8 @@ void loop() {
  current
  *  index into the speeds array.
  */
+
+/*
 const
 struct {
 	unsigned MSEL;
@@ -125,6 +160,7 @@ void IRQ30() {
 	SYSCON.MAINCLKUEN = 1;
 }
 
+*/
 /*
 * - prescale register (PR)
 * specifies max value for prescale counter (PC)

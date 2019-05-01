@@ -122,16 +122,7 @@ struct SYSCON {
 
 	unsigned RESERVED3;            // 124
 	
-	struct {
-		unsigned UNUSED0 : 7;
-		unsigned CT16B0 : 1;
-		unsigned UNUSED1: 5;
-		unsigned ADC: 1;
-		unsigned RESERVED0 : 1;
-		unsigned WDT: 1;
-		unsigned IOCON: 1;
-		unsigned RESERVED1: 15;
-	} SYSAHBCLKCTRL;               // 128
+	unsigned SYSAHBCLKCTRL;               // 128
 
 	unsigned RESERVED4[4];         // 132, 136, 140, 144
 	 

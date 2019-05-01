@@ -10,44 +10,113 @@ extern unsigned __VECTOR_CHECKSUM;
 
 #define DEFAULTIRQ __attribute__((weak, alias("default_handler")))
 
-void IRQ0() DEFAULTIRQ;
-void IRQ1() DEFAULTIRQ;
-void IRQ2() DEFAULTIRQ;
-void IRQ3() DEFAULTIRQ;
-void IRQ4() DEFAULTIRQ;
-void IRQ5() DEFAULTIRQ;
-void IRQ6() DEFAULTIRQ;
-void IRQ7() DEFAULTIRQ;
-void IRQ8() DEFAULTIRQ;
-void IRQ9() DEFAULTIRQ;
-void IRQ10() DEFAULTIRQ;
-void IRQ11() DEFAULTIRQ;
-void IRQ12() DEFAULTIRQ;
-void IRQ13() DEFAULTIRQ;
-void IRQ14() DEFAULTIRQ;
-void IRQ15() DEFAULTIRQ;
-void IRQ16() DEFAULTIRQ;
-void IRQ17() DEFAULTIRQ;
-void IRQ18() DEFAULTIRQ;
-void IRQ19() DEFAULTIRQ;
-void IRQ20() DEFAULTIRQ;
-void IRQ21() DEFAULTIRQ;
-void IRQ22() DEFAULTIRQ;
-void IRQ23() DEFAULTIRQ;
-void IRQ24() DEFAULTIRQ;
-void IRQ25() DEFAULTIRQ;
-void IRQ26() DEFAULTIRQ;
-void IRQ27() DEFAULTIRQ;
-void IRQ28() DEFAULTIRQ;
-void IRQ29() DEFAULTIRQ;
-void IRQ30() DEFAULTIRQ;
-void IRQ31() DEFAULTIRQ;
+/*
+extern void IRQ0() DEFAULTIRQ;
+extern void IRQ1() DEFAULTIRQ;
+extern void IRQ2() DEFAULTIRQ;
+extern void IRQ3() DEFAULTIRQ;
+extern void IRQ4() DEFAULTIRQ;
+extern void IRQ5() DEFAULTIRQ;
+extern void IRQ6() DEFAULTIRQ;
+extern void IRQ7() DEFAULTIRQ;
+extern void IRQ8() DEFAULTIRQ;
+extern void IRQ9() DEFAULTIRQ;
+extern void IRQ10() DEFAULTIRQ;
+extern void IRQ11() DEFAULTIRQ;
+extern void IRQ12() DEFAULTIRQ;
+extern void IRQ13() DEFAULTIRQ;
+extern void IRQ14() DEFAULTIRQ;
+extern void IRQ15() DEFAULTIRQ;
+*/
+
+extern void IRQ16();
+
+/*
+extern void IRQ17() DEFAULTIRQ;
+extern void IRQ18() DEFAULTIRQ;
+extern void IRQ19() DEFAULTIRQ;
+extern void IRQ20() DEFAULTIRQ;
+extern void IRQ21() DEFAULTIRQ;
+extern void IRQ22() DEFAULTIRQ;
+extern void IRQ23() DEFAULTIRQ;
+extern void IRQ24() DEFAULTIRQ;
+extern void IRQ25() DEFAULTIRQ;
+extern void IRQ26() DEFAULTIRQ;
+extern void IRQ27() DEFAULTIRQ;
+extern void IRQ28() DEFAULTIRQ;
+extern void IRQ29() DEFAULTIRQ;
+extern void IRQ30() DEFAULTIRQ;
+extern void IRQ31() DEFAULTIRQ;
+*/
+
 
 void default_handler() {
-	
 }
 
-unsigned vector[40] __attribute__((section(".vector"))) = {
+
+void IRQ0() {}
+
+void IRQ1() {}
+
+void IRQ2() {}
+
+void IRQ3() {}
+
+void IRQ4() {}
+
+void IRQ5() {}
+
+void IRQ6() {}
+
+void IRQ7() {}
+
+void IRQ8() {}
+
+void IRQ9() {}
+
+void IRQ10() {}
+
+void IRQ11() {}
+
+void IRQ12() {}
+
+void IRQ13() {}
+
+void IRQ14() {}
+
+void IRQ15() {}
+
+void IRQ17() {}
+
+void IRQ18() {}
+
+void IRQ19() {}
+
+void IRQ20() {}
+
+void IRQ21() {}
+
+void IRQ22() {}
+
+void IRQ23() {}
+
+void IRQ24() {}
+
+void IRQ25() {}
+
+void IRQ26() {}
+
+void IRQ27() {}
+
+void IRQ28() {}
+
+void IRQ29() {}
+
+void IRQ30() {}
+
+void IRQ31() {}
+
+unsigned vector[48] __attribute__((section(".vector"))) = {
 	(unsigned)&__INITIAL_SP,
 
 	FUNC_ADDR(reset),
@@ -59,6 +128,15 @@ unsigned vector[40] __attribute__((section(".vector"))) = {
 	0,
 
 	(unsigned)&__VECTOR_CHECKSUM,
+
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
 	
 	FUNC_ADDR(IRQ0),
 	FUNC_ADDR(IRQ1),
