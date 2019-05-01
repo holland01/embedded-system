@@ -6,7 +6,7 @@ root=../openocd/tcl
 program=$1
 
 cd $root
-openocd -f interface/stlink-v2.cfg -f target/lpc11xx.cfg -c'gdb_port 3333; gdb_memory_map disable'&
+openocd -f interface/stlink-v2.cfg -f target/lpc11xx.cfg -c'gdb_port 3333;'&
 
 cd $here
 gdb-arm $program
