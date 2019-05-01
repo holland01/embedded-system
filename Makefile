@@ -29,6 +29,7 @@ flash:
 	openocd -f $(OPENOCD_TARGET) -f $(OPENOCD_INTERFACE) -c $(OPENOCD_CMD_FLASH) 
 
 clean:
+	rm -f *~
 	rm -f $(INCLUDE)/*~
 	rm -f $(SRC)/*~
 	rm -f $(OBJ)/*.o
