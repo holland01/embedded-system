@@ -1,0 +1,3 @@
+#!/bin/bash
+
+openocd -f interface/stlink-v2.cfg -f target/lpc11xx.cfg -c "program ${1} verify reset exit"
