@@ -10,7 +10,7 @@ extern unsigned __VECTOR_CHECKSUM;
 
 #define DEFAULTIRQ __attribute__((weak, alias("default_handler")))
 
-/*
+
 extern void IRQ0() DEFAULTIRQ;
 extern void IRQ1() DEFAULTIRQ;
 extern void IRQ2() DEFAULTIRQ;
@@ -27,11 +27,7 @@ extern void IRQ12() DEFAULTIRQ;
 extern void IRQ13() DEFAULTIRQ;
 extern void IRQ14() DEFAULTIRQ;
 extern void IRQ15() DEFAULTIRQ;
-*/
-
-extern void IRQ16();
-
-/*
+extern void IRQ16() DEFAULTIRQ;
 extern void IRQ17() DEFAULTIRQ;
 extern void IRQ18() DEFAULTIRQ;
 extern void IRQ19() DEFAULTIRQ;
@@ -47,74 +43,11 @@ extern void IRQ28() DEFAULTIRQ;
 extern void IRQ29() DEFAULTIRQ;
 extern void IRQ30() DEFAULTIRQ;
 extern void IRQ31() DEFAULTIRQ;
-*/
 
 
 void default_handler() {
 }
 
-
-void IRQ0() {}
-
-void IRQ1() {}
-
-void IRQ2() {}
-
-void IRQ3() {}
-
-void IRQ4() {}
-
-void IRQ5() {}
-
-void IRQ6() {}
-
-void IRQ7() {}
-
-void IRQ8() {}
-
-void IRQ9() {}
-
-void IRQ10() {}
-
-void IRQ11() {}
-
-void IRQ12() {}
-
-void IRQ13() {}
-
-void IRQ14() {}
-
-void IRQ15() {}
-
-void IRQ17() {}
-
-void IRQ18() {}
-
-void IRQ19() {}
-
-void IRQ20() {}
-
-void IRQ21() {}
-
-void IRQ22() {}
-
-void IRQ23() {}
-
-void IRQ24() {}
-
-void IRQ25() {}
-
-void IRQ26() {}
-
-void IRQ27() {}
-
-void IRQ28() {}
-
-void IRQ29() {}
-
-void IRQ30() {}
-
-void IRQ31() {}
 
 unsigned vector[48] __attribute__((section(".vector"))) = {
 	(unsigned)&__INITIAL_SP,

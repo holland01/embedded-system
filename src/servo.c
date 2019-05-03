@@ -26,7 +26,6 @@ static inline void set_pll_ctrl(unsigned MSEL, unsigned PSEL) {
 static volatile unsigned* DEBUG_DUMP = 0;
 
 void setup() {
-#if 0
 	SYSCON.SYSPLLCLKSEL    = 0;
 	SYSCON.PDRUNCFG.SYSPLL = 0;
 	
@@ -39,7 +38,6 @@ void setup() {
 
 	SYSCON.MAINCLKSEL = 3;
 	SYSCON.MAINCLKUEN = 1;
-#endif
 	
 	GPIO1.DIR |=  PIO_9;
 
@@ -53,12 +51,11 @@ void setup() {
 
 	asm volatile ("CPSIE i");
 	
-	//	ISER |= 1 << 30;
 	ISER |= 1 << 16;
 	
 	SYSCON.SYSAHBCLKCTRL |= (1 << 7); /* CT16B0 */
 	
-	SET_LOW_16(TMR16B0.PR, 12000); /* 20 */
+	SET_LOW_16(TMR16B0.PR, 48000); /* 20 */
 	SET_LOW_16(TMR16B0.TC, 0);
 	SET_LOW_16(TMR16B0.PC, 0);
 	SET_LOW_16(TMR16B0.MR1, 1000); /* 20 millisec interval */
@@ -75,24 +72,6 @@ void setup() {
  */
 #define COUNT 120000
 void loop() {
-	#if 0
-	volatile int k = 0;
-
-	asm volatile(
-		"mov r0, #0xFF\n\t"
-		"mov r1, #0x1F\n\t"
-		"bic r0, r1\n\t"
-		"mov %[result], r0"
-		: [result] "=r" (k)
-		);
-
-	if (k == 0xe0) {
-		GPIO1.DATA[PIO_9] = PIO_9;
-		for(int i = 0; i < COUNT; ++i)
-			asm("");
-	}
-	#endif
-
 	asm volatile("wfi");
 }
 
@@ -100,20 +79,7 @@ static volatile unsigned start_state = 0;
 
 void IRQ16() {
 	TMR16B0.IR |= (1 << 1); /* set MR1 to HIGH */
-
-	//	ICER |= 1 << 16;
-	//ISER |= 1 << 16;
-	
 	GPIO1.DATA[PIO_9] ^= PIO_9;
-
-	//unsigned h = GET_LOW_16(TMR16B0.TC);
-
-	//if (500 <= h && h <= 2500) {
-		//TMR16B0.IR |= (1 << 0); /* set MR0 to HIGH */
-	//} else {
-		
-	//
-
 }
 
 /* IRQ30
