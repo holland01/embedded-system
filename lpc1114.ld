@@ -41,7 +41,6 @@ SECTIONS {
 
 __INITIAL_SP = ORIGIN(sram) + LENGTH(sram);
 __VECTOR_CHECKSUM = 0 - __INITIAL_SP - (reset + 1) - (NMI + 1) - (hardfault + 1);
-
 ISER = 0xE000E100;
 ICER = 0xE000E180;
 SYSCON = 0x40048000;

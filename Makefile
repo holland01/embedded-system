@@ -3,7 +3,7 @@ LD := ld-arm
 
 INCLUDE=./include
 
-oFLAGS := -g -mcpu=cortex-m0 -I$(INCLUDE) -O0
+FLAGS := -g -mcpu=cortex-m0 -I$(INCLUDE) -O0
 TARGET := hello
 
 SRC=./src
