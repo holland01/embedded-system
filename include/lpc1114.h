@@ -38,7 +38,7 @@ struct GPIO {
 	
 	unsigned IC: 11;
 	unsigned : 21;
-} extern GPIO1, GPIO2;
+} extern GPIO1, GPIO0;
 
 volatile struct TMR16 {
 	unsigned IR;
@@ -72,7 +72,7 @@ volatile struct TMR16 {
 
 	unsigned CTCR;
 	
-	unsigned PWM;
+	unsigned PWMC;
 } extern TMR16B0;
 
 struct SYSCON {
@@ -183,22 +183,38 @@ struct SYSCON {
 
 	unsigned PDSLEEPCFG;           // 560
 	unsigned PDAWAKECFG;           // 564
-	
-	struct {
-		unsigned UNUSED0: 4;
-		unsigned ADC : 1;
-		unsigned UNUSED1: 2;        
-		unsigned SYSPLL: 1;
-		unsigned RESERVED: 25; 
-	} PDRUNCFG;                    // 568
+  
+	unsigned PDRUNCFG;                    // 568
 
 	unsigned RESERVED12[110];
 
 	unsigned DEVICE_ID;
 } extern SYSCON;
 
-extern unsigned ISER;
+volatile struct ADC {
+	unsigned CR;
+	unsigned GD;
+	
+	unsigned __RESERVED0;
 
+	unsigned INTEN;
+	
+	unsigned R0;
+	unsigned R1;
+	unsigned R2;
+	unsigned R3;
+	unsigned R4;
+	unsigned R5;
+	unsigned R6;
+	unsigned R7;
+	
+	unsigned STAT;
+} extern ADC;
+
+extern unsigned ISER;
 extern unsigned ICER;
+
+extern unsigned IOCON_PIO0_8;
+extern unsigned IOCON_R_PIO0_11;
 
 #endif // __LPC1114_H__
