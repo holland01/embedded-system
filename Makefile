@@ -4,7 +4,7 @@ LD := ld-arm
 INCLUDE=./include
 
 FLAGS := -g -mcpu=cortex-m0 -I$(INCLUDE) -O0
-TARGET := hello
+TARGET := servo
 
 SRC=./src
 OBJ=./obj
@@ -32,6 +32,7 @@ flash:
 	openocd -f $(OPENOCD_TARGET) -f $(OPENOCD_INTERFACE) -c $(OPENOCD_CMD_FLASH) 
 
 clean:
+	rm -f $(TARGET)
 	rm -f *~
 	rm -f $(INCLUDE)/*~
 	rm -f $(SRC)/*~
