@@ -1,5 +1,7 @@
 #include "lpc1114.h"
 
+
+
 static inline void set_pll_ctrl(unsigned MSEL, unsigned PSEL) {
 	SYSCON.SYSPLLCTRL.MSEL = MSEL;
 	SYSCON.SYSPLLCTRL.PSEL = PSEL;
@@ -26,44 +28,36 @@ static inline void set_pll_ctrl(unsigned MSEL, unsigned PSEL) {
 static volatile unsigned* DEBUG_DUMP = 0;
 
 void setup() {
-	SYSCON.SYSPLLCLKSEL    = 0;
-	SYSCON.PDRUNCFG &= ~(1 << 7); /* SYSPLL = Powered */
+	SYSCON.SYSPLLCLKSEL = SYSCON_SYSPLLCLK_IRC;
+	SYSCON.PDRUNCFG &= SYSCON_PDRUNCFG_SYSPLL_ON; 
 	
 	set_pll_ctrl(3, 1);
 	
-	SYSCON.SYSPLLCLKUEN    = 1;
+	SYSCON.SYSPLLCLKUEN = 1;
 	
 	while (!SYSCON.SYSPLLSTAT)
 		asm("");
 
-	SYSCON.MAINCLKSEL = 3;
+	SYSCON.MAINCLKSEL = SYSCON_MAINCLKSEL_PLL;
 	SYSCON.MAINCLKUEN = 1;
 
-	//GPIO0.DIR |= PIO_8;
-	GPIO0.DATA[PIO_8] = 0;
-	
+	GPIO0.DATA[PIO_8] = 0;	
 	GPIO1.DIR |=  PIO_9;
-
-	//GPIO1.DIR &= ~PIO_8;
-	//GPIO1.IS  &= ~PIO_8;
-	//GPIO1.IBE &= ~PIO_8;
-	//GPIO1.IEV &= ~PIO_8;
-	//GPIO1.IE  |=  PIO_8;
-
+	
 	GPIO1.DATA[PIO_9] = 0;
 
 	asm volatile ("CPSIE i");
 
-	SYSCON.SYSAHBCLKCTRL |= (1 << 7); /* CT16B0 = enable */
-	SYSCON.SYSAHBCLKCTRL |= (1 << 13); /* ADC = enable */
-	SYSCON.SYSAHBCLKCTRL |= (1 << 16); /* IOCON = enable */
-	SYSCON.PDRUNCFG &= ~(1 << 4) /* ADC = Powered */;
+	SYSCON.SYSAHBCLKCTRL |= SYSCON_SYSAHBCLKCTRL_CT16B0_ON;
+	SYSCON.SYSAHBCLKCTRL |= SYSCON_SYSAHBCLKCTRL_ADC_ON;
+	SYSCON.SYSAHBCLKCTRL |= SYSCON_SYSAHBCLKCTRL_IOCON_ON;
+	SYSCON.PDRUNCFG &= SYSCON_PDRUNCFG_ADC_ON;
 
-	ADC.CR &= ~0xFF; /* [7:0] SEL = Channel 0 */
-	ADC.CR |= (1 << 0); 
+	ADC.CR &= ADC_CR_SEL_CLEAR_MASK; 
+	ADC.CR |= ADC_CR_SEL_CHANNEL_0; 
 
-	ADC.CR &= 0xFFFF00FF; /* [15:8] CLKDIV = 11 */
-	ADC.CR |= 11 << 8;
+	ADC.CR &= ADC_CR_CLKDIV_CLEAR_MASK;
+	ADC.CR |= ADC_CR_CLKDIV_SHIFT(11);
 
 	ADC.CR &= ~(1 << 16); /* [16] BURST = Disabled */
 	ADC.CR &= ~((1 << 17) | (1 << 18) | (1 << 19)); /* [19:17] CLKS = 11 clocks / 10 bits */
