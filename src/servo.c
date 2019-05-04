@@ -76,13 +76,7 @@ void setup() {
 	
 	TMR16B0.PWMC = TMR16B0_PWMC_ENABLE_MR0;
 	
-	IOCON_R_PIO0_11 &= ~((1 << 0) | (1 << 1) | (1 << 2)); /* [2:0] Set FUNC = AD0 */
-	IOCON_R_PIO0_11 |= 0x2;
-	
-	IOCON_R_PIO0_11 &= ~((1 << 3) | (1 << 4)); /* [4:3] Set MODE = Inactive */
-	IOCON_R_PIO0_11 &= ~(1 << 5); /* [5] Set HYS = Disabled */
-	IOCON_R_PIO0_11 &= ~(1 << 7); /* [7] Set ADMODE = Analog input */
-	IOCON_R_PIO0_11 &= ~(1 << 10);
+	IOCON_R_PIO0_11 = IOCON_R_PIO0_11_SET_AD0_INPUT;
 
 	IOCON_PIO0_8 &= ~((1 << 11) - 1); /* [2:0] FUNC = CT16B0_MAT0 */
 	IOCON_PIO0_8 |= 0x2;

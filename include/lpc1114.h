@@ -264,4 +264,23 @@ extern unsigned IOCON_R_PIO0_11;
 
 #define TMR16B0_PWMC_ENABLE_MR0 (TMR16B0.PWMC | (1 << 0))
 
+#define IOCON_R_PIO0_11_FUNC_MASK ((1 << 0) | (1 << 1) | (1 << 2))
+#define IOCON_R_PIO0_11_FUNC_AD0 (1 << 2)
+
+#define IOCON_R_PIO0_11_MODE_MASK ((1 << 3) | (1 << 4))
+#define IOCON_R_PIO0_11_HYS_BIT (1 << 5)
+#define IOCON_R_PIO0_11_ADMODE_BIT (1 << 7) /* ON = digital functional, OFF = analog input */
+#define IOCON_R_PIO0_11_OD_BIT (1 << 10)
+
+#define IOCON_R_PIO0_11_SET_AD0_INPUT				\
+	( (IOCON_R_PIO0_11 &							\
+	   (~(											\
+		  IOCON_R_PIO0_11_FUNC_MASK					\
+		  | IOCON_R_PIO0_11_MODE_MASK				\
+		  | IOCON_R_PIO0_11_HYS_BIT					\
+		  | IOCON_R_PIO0_11_ADMODE_BIT				\
+		  | IOCON_R_PIO0_11_OD_BIT					\
+		  )))	                                    \
+	  | IOCON_R_PIO0_11_FUNC_AD0)
+
 #endif // __LPC1114_H__
