@@ -217,11 +217,8 @@ extern unsigned ICER;
 extern unsigned IOCON_PIO0_8;
 extern unsigned IOCON_R_PIO0_11;
 
-/* Masks are used either to
-   a) ensure that unwanted data isn't set, or
-   b) to zero out specific bits */
-
-/*  */
+#define SET_LOW_16(reg, val) (reg) &= 0xFFFF0000; (reg) |= (val)
+#define GET_LOW_16(reg) ((reg) & 0x0000FFFF)
 
 #define SYSCON_PDRUNCFG_SYSPLL_OFF (1 << 7)
 #define SYSCON_PDRUNCFG_ADC_OFF (1 << 4)
