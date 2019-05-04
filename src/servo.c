@@ -12,22 +12,14 @@ static inline void set_pll_ctrl(unsigned MSEL, unsigned PSEL) {
 	SYSCON.SYSPLLCTRL.RESERVED = 0; 
 }
 
-#define SET_LOW_16(reg, val) (reg) &= 0xFFFF0000; (reg) |= (val)
-#define GET_LOW_16(reg) ((reg) & 0x0000FFFF)
-
-/* Setup
- *  There are three primary setup steps: PLL, PIO1_9, and PIO1_8.  The PLL 
- is set
- *  for 48 MHz.  PIO1_9 is set as output.  PIO1_8 is set as input 
- triggering
- *  interrupt on falling edge.  Finally, GPIO1 triggers IRQ30, which is 
- enabled
- *  is ISER.
+/* Setup-PLL
+ * 
+ * Sets the main system clock to receive power 
+ * from the system's phase lock loop,
+ * so we can boost the CPU frequency from 12 MHZ to 48 MHZ
  */
 
-static volatile unsigned* DEBUG_DUMP = 0;
-
-void setup() {
+void setup_pll() {
 	SYSCON.SYSPLLCLKSEL = SYSCON_SYSPLLCLK_IRC;
 
 	SYSCON.PDRUNCFG &= ~SYSCON_PDRUNCFG_SYSPLL_OFF; 
@@ -41,13 +33,42 @@ void setup() {
 
 	SYSCON.MAINCLKSEL = SYSCON_MAINCLKSEL_PLL;
 	SYSCON.MAINCLKUEN = 1;
+}
 
-	GPIO0.DATA[PIO_8] = 0;	
-	GPIO1.DIR |=  PIO_9;
-	
-	GPIO1.DATA[PIO_9] = 0;
+/* 
+ * Enable-interrupts
+ *
+ * Enables IRQ24 and IRQ16.
+ * IRQ24 is used to handle ADC conversion,
+ * and IRQ16 is fired at the start of every
+ * 20 millisecond cycle 
+ */
 
+void enable_ints() {
 	asm volatile ("CPSIE i");
+
+	ISER = ISER_IRQ24_ENABLED; 
+	ISER = ISER_IRQ16_ENABLED;
+}
+
+
+/* Setup
+ * Involves the following:
+ *  - Initialize PLL
+ *  - Enable interrupts
+ *  - Configure clocks with SYSAHBCLKCTRL
+ *  - Setup analog to digital input
+ *  - Setup IOCON_R_PIO0_11 to use ADC
+ *  - Setup IOCON_PIO0_8 to use CTB16_MAT0
+ *  - Configure TMR16B0 block to utilize
+ *    pulse width modulation at a 20 millisecond
+ *    cycle. This is for the servo motor connection. 
+ */
+
+void setup() {
+	setup_pll();
+	
+	enable_ints();
 
 	SYSCON.SYSAHBCLKCTRL |= SYSCON_SYSAHBCLKCTRL_CT16B0_ON;
 	SYSCON.SYSAHBCLKCTRL |= SYSCON_SYSAHBCLKCTRL_ADC_ON;
@@ -63,9 +84,7 @@ void setup() {
 
 	ADC.INTEN = ADC_INTEN_SET_ADGINTEN_ONLY;
 	
-	ISER = ISER_IRQ24_ENABLED; 
-	ISER = ISER_IRQ16_ENABLED;
-	
+		
 	SET_LOW_16(TMR16B0.PR, 48); 
 	SET_LOW_16(TMR16B0.TC, 0);
 	SET_LOW_16(TMR16B0.PC, 0);
@@ -84,6 +103,12 @@ void setup() {
 	TMR16B0.TCR |= 2; /* reset timer */
 	TMR16B0.TCR &= ~0x3;
 	TMR16B0.TCR |= 0x1; /* enable counter */
+
+	GPIO0.DATA[PIO_8] = 0;	
+	GPIO1.DIR |=  PIO_9;
+	
+	GPIO1.DATA[PIO_9] = 0;
+
 }
 /* Loop
  *  Simple loop to blink an LED on PIO1_9.
