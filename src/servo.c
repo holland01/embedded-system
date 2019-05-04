@@ -39,7 +39,7 @@ void setup() {
 	SYSCON.MAINCLKSEL = 3;
 	SYSCON.MAINCLKUEN = 1;
 
-	GPIO0.DIR |= PIO_8;
+	//GPIO0.DIR |= PIO_8;
 	GPIO0.DATA[PIO_8] = 0;
 	
 	GPIO1.DIR |=  PIO_9;
@@ -62,14 +62,18 @@ void setup() {
 	ADC.CR &= ~0xFF; /* [7:0] SEL = Channel 0 */
 	ADC.CR |= (1 << 0); 
 
-	ADC.CR &= 0xFFFF00FF; /* [15:8] CLKDIV = 12 */
-	ADC.CR |= 12 << 8;
+	ADC.CR &= 0xFFFF00FF; /* [15:8] CLKDIV = 11 */
+	ADC.CR |= 11 << 8;
 
 	ADC.CR &= ~(1 << 16); /* [16] BURST = Disabled */
-	
 	ADC.CR &= ~((1 << 17) | (1 << 18) | (1 << 19)); /* [19:17] CLKS = 11 clocks / 10 bits */
-	
 	ADC.CR &= ~((1 << 24) | (1 << 25) | (1 << 26)); /* [26:24] START = No start */
+
+	//ADC.INTEN |= (1 << 0); /* generate interrupt on conversion complete for AD0 */
+	//ADC.INTEN &= ~(1 << 8); /* disable ADGINTEN */
+
+	ADC.INTEN &= ~(1 << 0);
+	ADC.INTEN |= (1 << 8);
 	
 	ISER |= 1 << 24; /* IRQ24 = Enabled */
 	ISER |= 1 << 16; /* IRQ16 = Enabled */
@@ -79,12 +83,15 @@ void setup() {
 	SET_LOW_16(TMR16B0.PC, 0);
 	SET_LOW_16(TMR16B0.MR1, 20000); /* 20 millisec interval */
 
-	TMR16B0.MCR |= (1 << 3); /* MCR.MR1R */
-	TMR16B0.MCR |= (1 << 4); /* MCR.MR1I */
+	TMR16B0.MCR |= (1 << 3); /* MCR.MR1I */
+	TMR16B0.MCR |= (1 << 4); /* MCR.MR1R */
 	
-	//TMR16B0.PWMC |= 0x1; /* set MAT1 to PWM */
-
-
+	TMR16B0.PWMC |= 0x1 << 0; /* set MAT1 to PWM */
+	//TMR16B0.PWMC |= 0x1 << 1;
+	
+	//TMR16B0.EMR |= 0x1 << 0;
+	//TMR16B0.EMR |= 0x2 << 4;
+	
 	IOCON_R_PIO0_11 &= ~((1 << 0) | (1 << 1) | (1 << 2)); /* [2:0] Set FUNC = AD0 */
 	IOCON_R_PIO0_11 |= 0x2;
 	
@@ -92,7 +99,12 @@ void setup() {
 	IOCON_R_PIO0_11 &= ~(1 << 5); /* [5] Set HYS = Disabled */
 	IOCON_R_PIO0_11 &= ~(1 << 7); /* [7] Set ADMODE = Analog input */
 	IOCON_R_PIO0_11 &= ~(1 << 10);
-	
+
+	IOCON_PIO0_8 &= ~((1 << 11) - 1); /* [2:0] FUNC = CT16B0_MAT0 */
+	IOCON_PIO0_8 |= 0x2;
+
+	TMR16B0.TCR |= 2; /* reset timer */
+	TMR16B0.TCR &= ~0x3;
 	TMR16B0.TCR |= 0x1; /* enable counter */
 }
 /* Loop
@@ -114,30 +126,32 @@ void pause() {
 void IRQ16() {
 	TMR16B0.IR |= (1 << 1); /* set MR1 to HIGH */
 	ADC.CR |= (1 << 24); /* [26:24] START = Start conversion now */
-
+	
 	GPIO1.DATA[PIO_9] = 0;
 	GPIO0.DATA[PIO_8] = 0;
 }
 
+// volatile unsigned WIDTH = MR1 - 500 - (VREF << 1);
+
+volatile unsigned IRQ24_TICK = 1;
+
 void IRQ24() {
-	unsigned DONE = ADC.STAT & 1;
+	volatile unsigned DONE = ADC.STAT & 1;
 
 	if (DONE) {
-		unsigned k = (ADC.R0 >> 6) & 0x3FF;
- 
-		unsigned time = GET_LOW_16(TMR16B0.TC);
+		volatile unsigned VREF = (ADC.R0 >> 6) & 0x3FF;
+		volatile unsigned MR1 = GET_LOW_16(TMR16B0.MR1);
+		
+		unsigned ROTATE = ((VREF) | 1) * IRQ24_TICK;
+		ROTATE &= 0x3ff;
+		
+		volatile unsigned WIDTH= MR1 - 500 - (ROTATE);
+		volatile unsigned TC = GET_LOW_16(TMR16B0.TC);
 
-		if (0 <= time && time <= 500) {
-			if (530 <= k && k <= 535) {
-				GPIO1.DATA[PIO_9] = PIO_9;
-				GPIO0.DATA[PIO_8] = 0;
-			} else {
-				GPIO1.DATA[PIO_9] = 0;
-				GPIO0.DATA[PIO_8] = PIO_8;
-			}
-		}
-
-	} 	
+		IRQ24_TICK++;
+		
+		SET_LOW_16(TMR16B0.MR0, WIDTH);
+	}
 }
 
 /* IRQ30
