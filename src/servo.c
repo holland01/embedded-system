@@ -1,6 +1,8 @@
 #include "lpc1114.h"
 #include "framework.h"
 
+#ifdef MODULE_SERVO
+
 /* Setup
  * Involves the following:
  *  - Initialize PLL
@@ -85,3 +87,4 @@ void IRQ30() {
 * - PCLK (peripheral clock)
 *   - externally supplied clock
 */
+#endif // MODULE_SERVO
