@@ -8,8 +8,7 @@ extern void reset();
 extern unsigned __INITIAL_SP;
 extern unsigned __VECTOR_CHECKSUM;
 
-#define DEFAULTIRQ __attribute__((weak, alias("default_handler")))
-
+#define DEFAULTIRQ __attribute__((weak, alias("__irq_generic")))
 
 extern void IRQ0() DEFAULTIRQ;
 extern void IRQ1() DEFAULTIRQ;
@@ -44,10 +43,8 @@ extern void IRQ29() DEFAULTIRQ;
 extern void IRQ30() DEFAULTIRQ;
 extern void IRQ31() DEFAULTIRQ;
 
-
-void default_handler() {
+void __irq_generic() {
 }
-
 
 unsigned vector[48] __attribute__((section(".vector"))) = {
 	(unsigned)&__INITIAL_SP,
@@ -71,38 +68,93 @@ unsigned vector[48] __attribute__((section(".vector"))) = {
 	0,
 	0,
 	
-	FUNC_ADDR(IRQ0),
-	FUNC_ADDR(IRQ1),
-	FUNC_ADDR(IRQ2),
-	FUNC_ADDR(IRQ3),
-	FUNC_ADDR(IRQ4),
-	FUNC_ADDR(IRQ5),
-	FUNC_ADDR(IRQ6),
-	FUNC_ADDR(IRQ7),
-	FUNC_ADDR(IRQ8),
-	FUNC_ADDR(IRQ9),
-	FUNC_ADDR(IRQ10),
-	FUNC_ADDR(IRQ11),
-	FUNC_ADDR(IRQ12),
-	FUNC_ADDR(IRQ13),
-	FUNC_ADDR(IRQ14),
-	FUNC_ADDR(IRQ15),
-	FUNC_ADDR(IRQ16),
-	FUNC_ADDR(IRQ17),
-	FUNC_ADDR(IRQ18),
-	FUNC_ADDR(IRQ19),
-	FUNC_ADDR(IRQ20),
-	FUNC_ADDR(IRQ21),
-	FUNC_ADDR(IRQ22),
-	FUNC_ADDR(IRQ23),
-	FUNC_ADDR(IRQ24),
-	FUNC_ADDR(IRQ25),
-	FUNC_ADDR(IRQ26),
-	FUNC_ADDR(IRQ27),
-	FUNC_ADDR(IRQ28),
-	FUNC_ADDR(IRQ29),
-	FUNC_ADDR(IRQ30),
-	FUNC_ADDR(IRQ31)
+	FUNC_ADDR(__irq_generic),
+	FUNC_ADDR(__irq_generic),
+	FUNC_ADDR(__irq_generic),
+	FUNC_ADDR(__irq_generic),
+	FUNC_ADDR(__irq_generic),
+	FUNC_ADDR(__irq_generic),
+	FUNC_ADDR(__irq_generic),
+	FUNC_ADDR(__irq_generic),
+	FUNC_ADDR(__irq_generic),
+	FUNC_ADDR(__irq_generic),
+	FUNC_ADDR(__irq_generic),
+	FUNC_ADDR(__irq_generic),
+	FUNC_ADDR(__irq_generic),
+	FUNC_ADDR(__irq_generic),
+	FUNC_ADDR(__irq_generic),
+	FUNC_ADDR(__irq_generic),
+	FUNC_ADDR(__irq_generic),
+	FUNC_ADDR(__irq_generic),
+	FUNC_ADDR(__irq_generic),
+	FUNC_ADDR(__irq_generic),
+	FUNC_ADDR(__irq_generic),
+	FUNC_ADDR(__irq_generic),
+	FUNC_ADDR(__irq_generic),
+	FUNC_ADDR(__irq_generic),
+	FUNC_ADDR(__irq_generic),
+	FUNC_ADDR(__irq_generic),
+	FUNC_ADDR(__irq_generic),
+	FUNC_ADDR(__irq_generic),
+	FUNC_ADDR(__irq_generic),
+	FUNC_ADDR(__irq_generic),
+	FUNC_ADDR(__irq_generic),
+	FUNC_ADDR(__irq_generic)
+};
+
+const unsigned __irq_handlers[48] = {
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0,
+	0
 };
 
 void default_hardfault() {

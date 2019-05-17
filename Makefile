@@ -24,6 +24,9 @@ $(TARGET): $(OBJECTS)
 objmake:
 	mkdir -p obj
 
+$(OBJ)/irq.o: $(SRC)/irq.s objmake
+	$(CC) $(FLAGS) -c $< -o $@
+
 $(OBJ)/%.o: $(SRC)/%.c objmake
 	$(CC) $(FLAGS) -c $< -o $@
 
