@@ -1,6 +1,10 @@
 #ifndef __LPC1114_H__
 #define __LPC1114_H__
 
+#ifndef NULL
+#define NULL 0
+#endif
+
 #define PIO_0 (1 << 0)
 #define PIO_1 (1 << 1)
 #define PIO_2 (1 << 2)

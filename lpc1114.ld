@@ -7,6 +7,7 @@ ENTRY(vector);
 
 SECTIONS {
        . = 0x00000000;
+       
        .text : {
               *(.vector);
               . = 0x000000c0;
@@ -31,12 +32,28 @@ SECTIONS {
              *(.bss);
        } > sram
 
+       .threads : {
+             . = ALIGN(4);
+             *(.threads);
+       } > sram
+
+       .init_array : {
+             . = ALIGN(4);
+             *(.init_array);
+       } > sram
+
        __DATA_LMA = LOADADDR(.data);
        __DATA_END = LOADADDR(.data) + SIZEOF(.data);
        __DATA_VMA = ADDR(.data);
 
        __BSS_VMA = ADDR(.bss);
        __BSS_END = ADDR(.bss) + SIZEOF(.bss);
+
+       __THREADS_START = ADDR(.threads);
+       __THREADS_END = ADDR(.threads) + SIZEOF(.threads);
+
+       __INIT_ARRAY_START = ADDR(.init_array);
+       __INIT_ARRAY_END = ADDR(.init_array) + SIZEOF(.init_array);
 }
 
 __INITIAL_SP = ORIGIN(sram) + LENGTH(sram);

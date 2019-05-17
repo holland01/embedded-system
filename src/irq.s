@@ -37,8 +37,7 @@ __irq_generic:
         cpsie i
 
        /* grab CURCTX address,
-          and append the saved psp
-          offset to the linked list */
+          and set CURCTX->sp to psp */
         ldr  r1, .L1
         ldr  r1, [r1]
         str  r0, [r1,#4]
@@ -88,6 +87,8 @@ __irq_generic:
         /* low-level rest.  This function switch the current stack to the     */
         /* stack associated with the special thread named __main__.  For      */
         /* simplicty, __main__'s stack is pointed to by the symbol __PSP.     */
+        /* bit 1 (#2) when set on the control register will set the active stack to PSP */
+        /* see http://infocenter.arm.com/help/index.jsp?topic=/com.arm.doc.dui0497a/CHDBIBGJ.html */
         .align 1
         .global __reset
 __reset:
@@ -95,7 +96,7 @@ __reset:
         ldr  r0,  [r0]
         msr  psp, r0
         mrs  r0,  control
-        movs r1,  #2
+        movs r1,  #2            
         orrs r0,  r1
         msr  control, r0
 

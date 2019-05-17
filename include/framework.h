@@ -1,6 +1,58 @@
 #ifndef __FRAMEWORK_H__
 #define __FRAMEWORK_H__
 
+typedef void (*ctor_t)();
+
+typedef struct thread thread_t;
+
+struct thread {
+	thread_t* next;
+	unsigned sp;
+};
+
+extern const void* __THREADS_START;
+extern const void* __THREADS_END;
+
+extern const ctor_t* __INIT_ARRAY_START;
+extern const ctor_t* __INIT_ARRAY_END;
+
+extern thread_t* CURCTX;
+
+#define THREAD(name, function, stacksize, arg0, arg1, arg2, arg3)			\
+	struct {																														\
+	thread_t thread;																										\
+	unsigned stack[(stacksize) - 16];																		\
+	unsigned r8;																												\
+	unsigned r9;																												\
+	unsigned r10;																												\
+	unsigned r11;																												\
+	unsigned r4;																												\
+  unsigned r5;																												\
+  unsigned r6;																												\
+  unsigned r7;																												\
+	unsigned r0;																												\
+	unsigned r1;																												\
+	unsigned r2;																												\
+	unsigned r3;																												\
+	unsigned r12;																												\
+	unsigned lr;																												\
+	void*    pc;																												\
+	unsigned psr;																												\
+} static name = {																											\
+	{ NULL, (unsigned)(&(name.r8)) },																		\
+  { 0 },																															\
+	0, 0, 0, 0,																													\
+	0, 0, 0, 0,																													\
+	(arg0), (arg1), (arg2), (arg3),																				\
+	0, 0,																																	\
+	(function),																														\
+	(1 << 24)																															\
+};																																			\
+ const void * __##name##__ptr __attribute__((section("*.threads"))) = &name; \
+const void * __##name##__ctor __attribute__((section("*.init_array"))) = (function);
+
+extern unsigned* __PSP;
+
 /* Setup-PLL
  * 
  * Sets the main system clock to receive power 
@@ -42,4 +94,17 @@ void setup_iocon();
  */
 
 void enable_ints();
+
+/*
+ * Thread-Append
+ * 
+ * Append the given thread
+ * to the global context list of threads,
+ * each of which is scheduled/executed
+ * in a round-robin fashion.
+ */
+
+void thread_append(thread_t* thd);
+
+
 #endif // __FRAMEWORK_H__

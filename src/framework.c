@@ -1,6 +1,33 @@
 #include "lpc1114.h"
 #include "framework.h"
 
+extern void __reset() __attribute__((section("*.text")));
+
+THREAD(__main__, __reset, 64, 0, 0, 0, 0);
+
+unsigned* __PSP = 0;
+
+thread_t* CURCTX = NULL;
+
+__attribute__((constructor)) void init() {
+	CURCTX = &__main__.thread;
+	__PSP = &__main__.thread.sp;
+	
+	void* thd_iter = &__THREADS_START;
+
+	while (thd_iter != &__THREADS_END) {
+		thread_t* thd = (thread_t*)(*((void**)thd_iter));
+
+		if (thd != CURCTX) {
+			thread_append(thd);
+		}
+			
+		thd_iter++;
+	}
+
+	
+}
+
 static inline void set_pll_ctrl(unsigned MSEL, unsigned PSEL) {
 	SYSCON.SYSPLLCTRL.MSEL = MSEL;
 	SYSCON.SYSPLLCTRL.PSEL = PSEL;
@@ -131,6 +158,35 @@ void IRQ16() {
 	
 	GPIO1.DATA[PIO_9] = 0;
 	GPIO0.DATA[PIO_8] = 0;
+}
+
+/*
+ * SysTick-Schedule
+ *
+ * Interrupted by SysTick,
+ * every 10 milliseconds
+ */
+
+void systick_schedule() {
+	
+}
+
+/*
+ * Thread-Append
+ */
+
+void thread_append(thread_t* thd) {
+	if (CURCTX != NULL) {
+		thread_t* p = CURCTX;
+		
+		while (p->next != NULL) {
+			p = p->next;
+		}
+
+		p->next = thd;
+	} else {
+		CURCTX = thd;
+	}
 }
 
 /*

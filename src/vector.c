@@ -66,7 +66,7 @@ unsigned vector[48] __attribute__((section(".vector"))) = {
 	0,
 	0,
 	0,
-	0,
+	FUNC_ADDR(__irq_generic), /* SysTick interrupt */
 	
 	FUNC_ADDR(__irq_generic),
 	FUNC_ADDR(__irq_generic),
@@ -119,7 +119,7 @@ const unsigned __irq_handlers[48] = {
 	0,
 	0,
 	0,
-	0,
+	0, /* sys-tick */
 	0,
 	0,
 	0,
