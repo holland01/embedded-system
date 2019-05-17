@@ -8,7 +8,7 @@ extern void reset();
 extern unsigned __INITIAL_SP;
 extern unsigned __VECTOR_CHECKSUM;
 
-#define DEFAULTIRQ __attribute__((weak, alias("__irq_generic")))
+#define DEFAULTIRQ __attribute__((weak, alias("default_irq")))
 
 extern void IRQ0() DEFAULTIRQ;
 extern void IRQ1() DEFAULTIRQ;
@@ -43,8 +43,10 @@ extern void IRQ29() DEFAULTIRQ;
 extern void IRQ30() DEFAULTIRQ;
 extern void IRQ31() DEFAULTIRQ;
 
-void __irq_generic() {
+void default_irq() {
 }
+
+extern void __irq_generic();
 
 unsigned vector[48] __attribute__((section(".vector"))) = {
 	(unsigned)&__INITIAL_SP,

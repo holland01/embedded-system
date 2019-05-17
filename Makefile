@@ -18,7 +18,7 @@ OPENOCD_CMD_FLASH := "program $(TARGET) verify reset exit"
 OPENOCD_TARGET := $(OPENOCD_ROOT)/target/lpc11xx.cfg
 OPENOCD_INTERFACE := $(OPENOCD_ROOT)/interface/stlink.cfg
 
-$(TARGET): $(OBJECTS)
+$(TARGET): $(OBJECTS) obj/irq.o
 	$(LD) -T lpc1114.ld -o $@ $^
 
 objmake:
