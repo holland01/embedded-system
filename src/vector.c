@@ -1,3 +1,4 @@
+
 #define FUNC_ADDR(x) ((unsigned)(x) + 1)
 
 extern void hardfault() __attribute__((weak, alias("default_hardfault")));									  

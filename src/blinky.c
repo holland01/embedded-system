@@ -1,8 +1,6 @@
 #include "lpc1114.h"
 #include "framework.h"
 
-#if 0
-
 void blink(int pin, int delay);
 
 THREAD(one, blink, 64, PIO_1, 1000000, 0, 0);
@@ -13,12 +11,14 @@ THREAD(two, blink, 64, PIO_2,  660000, 0, 0);
  *  GPIO0_2 (physical pin 25)  Loop 2's LED
  *  GPIO0_3 (physical pin 26)  Hard Fault's LED
  */
+#if 0
 void setup() {
 		/* enable clock for GPIO */
 	SYSCON.SYSAHBCLKCTRL |= 1 << 6;
 	GPIO0.DIR |= PIO_1 | PIO_2 | PIO_3;
 	GPIO0.DATA[PIO_1 | PIO_2 | PIO_3] = 0;
 }
+#endif
 /* This is the function body for both threads.
  */
 void blink(int pin, int delay) {
@@ -44,6 +44,8 @@ void HardFault () {
 	while(1)
 		asm("wfi");
 }
+
+#if 0
 /* It would be better if your OS did not require a loop funciton.  Just in 
 	 case
 	 *  yours does require a loop, here it is.

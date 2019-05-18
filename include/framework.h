@@ -33,17 +33,17 @@ struct {																														\
 	unsigned r3;																												\
 	unsigned r12;																												\
 	unsigned lr;																												\
-	void*    pc;																												\
+	unsigned pc;																												\
 	unsigned psr;																												\
-} static name = {																										\
-	{ NULL, (unsigned)(&(name.r8)) },																		\
-  { 0 },																															\
-	0, 0, 0, 0,																													\
-	0, 0, 0, 0,																													\
+	} static name = {																											\
+	{ NULL, (unsigned)(&(name.r8)) },																			\
+	{ 0 },																																\
+	0, 0, 0, 0,																														\
+	0x33, 0x22, 0x11, 0,																									\
 	(arg0), (arg1), (arg2), (arg3),																				\
 	0, 0,																																	\
-	(function),																														\
-	(1 << 24)																														\
+	(unsigned)((function) + 1),																						\
+	(1 << 24)																															\
 };																																			\
 void * const __##name##__ptr __attribute__((section(".threads"))) = &name;
 

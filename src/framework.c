@@ -1,6 +1,21 @@
 #include "lpc1114.h"
 #include "framework.h"
 
+#define disable_int asm volatile("CPSIE i")
+#define enable_int asm volatile("CPSIE i")
+
+/* 
+ * for when monitor reset halt
+ * doesn't restart properly
+ */
+static inline void debug_hang(int count) {
+	volatile int ccount = count * 1000000;
+	volatile int i = 0;
+	
+	while (i < ccount)
+		i++;
+}
+
 extern void __reset() __attribute__((section(".text")));
 
 extern unsigned __DATA_LMA;
@@ -13,9 +28,9 @@ extern unsigned __BSS_END;
 extern void* __THREADS_START;
 extern void* __THREADS_END;
 
-void main();
+void loop();
 
-THREAD(__main__, __reset, 64, 0, 0, 0, 0);
+THREAD(__main__, 0, 64, 0, 0, 0, 0);
 
 unsigned __PSP = 0;
 
@@ -23,7 +38,7 @@ thread_t* CURCTX = NULL;
 thread_t* RUNLIST = NULL;
 thread_t* FREELIST = NULL;
 
-static void init_threads() {
+static void init_threads() {	
 	unsigned thd_end = (unsigned)&__THREADS_END;
 	unsigned thd_iter = (unsigned)&__THREADS_START;
 	
@@ -31,16 +46,17 @@ static void init_threads() {
 		void** as_double_p = (void**) thd_iter;
 		
 		thread_t* thd = (thread_t*)(*as_double_p);
-
+		
 		if (thd != &__main__.thread) {
+			thd->sp = (unsigned)thd + 8 + (48 * 4);
+			
 			thread_append(&RUNLIST, thd);
 		}
-			
+
+					
 		thd_iter += 4;
 	}
 }
-
-static volatile unsigned GREAT_SUCCESS = 0x1337;
 
 static void setup_data_and_bss() {
 	{
@@ -67,7 +83,9 @@ static void setup_data_and_bss() {
 }
 
 void __init_system() {	
-  setup_data_and_bss();
+	//	debug_hang(20);
+
+	setup_data_and_bss();
 	
 	CURCTX = &__main__.thread;
 	__PSP = __main__.thread.sp;
@@ -78,13 +96,13 @@ void __init_system() {
 }
 
 void systick_on() {
-	SYST.RVR |= (48000 * 10) - 1;
+	SYST.RVR |= (48000 * 10) - 1; // 10 milliseconds for 48 mhz
 
-	SYST.CVR &= ~((1 << 24) - 1);
+	SYST.CVR &= ~((1 << 24) - 1); // clear the register
 
-	SYST.CSR |= 1 << 0;
-	SYST.CSR |= 1 << 1;
-	SYST.CSR |= 1 << 2;
+	SYST.CSR |= 1 << 0; // enable systic
+	SYST.CSR |= 1 << 1; // enable interrupt
+	SYST.CSR |= 1 << 2; // set clock to system clock
 }
 
 void systick_off() {
@@ -97,18 +115,24 @@ void setup() {
 	
 	GPIO1.DIR |= PIO_9;
 	GPIO1.DATA[PIO_9] = 0;
+
+	// GPIO clock enable
+	SYSCON.SYSAHBCLKCTRL |= 1 << 6;
+	GPIO0.DIR |= PIO_1 | PIO_2 | PIO_3;
+	//GPIO0.DATA[PIO_1 | PIO_2 | PIO_3] = 0;
+	GPIO0.DATA[PIO_2] = PIO_2;
+	
+	IOCON_PIO0_2 &= ~0x3; // clear
+	IOCON_PIO0_2 |= 0x1; // pio0_2
+	IOCON_PIO0_2 &= ~((1 << 3) | (1 << 4)); // inactive mode
+	IOCON_PIO0_2 &= ~(1 << 5); // disable hyst
+	IOCON_PIO0_2 &= ~(1 << 10); // standard gpio
 	
 	systick_on();
 }
 
 void loop() {
-	for (int i = 0; i < 1000000; ++i) {
-		asm("");
-	}
-
-	GPIO1.DATA[PIO_9] ^= PIO_9;
-	
-	//asm volatile("wfi");
+	asm("wfi");
 }
 
 /*
@@ -268,24 +292,22 @@ void IRQ16() {
  */
 
 void systick_schedule() {
-	//	asm("cpsid i");
+	disable_int;
 
-	systick_off();
-	
-	if (RUNLIST != NULL) {
+	if (RUNLIST != NULL) {		
 		thread_t* next = thread_next(&RUNLIST);
-		
 		CURCTX = next;
-
 		thread_append(&FREELIST, next);
+		
 	} else {
-		CURCTX = &__main__.thread;
+		
+		//CURCTX = &__main__.thread;
 
 		RUNLIST = FREELIST;
 		FREELIST = NULL;
 	}
-	
-	systick_on();
+
+	enable_int;
 }
 
 /*
@@ -295,7 +317,8 @@ void systick_schedule() {
 void thread_append(thread_t** root, thread_t* thd) {
 	if (*root != NULL) {
 		thread_t* p = *root;
-		
+    thd->next = NULL;
+
 		while (p->next != NULL) {
 			p = p->next;
 		}
@@ -315,6 +338,7 @@ thread_t* thread_next(thread_t** root) {
 
 	if (*root != NULL) {
 		k = *root;
+		k->next = NULL;
 		*root = (*root)->next;
 	}
 	

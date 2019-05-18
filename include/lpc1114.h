@@ -18,7 +18,7 @@
 #define PIO_10 (1 << 10)
 #define PIO_11 (1 << 11)
 
-struct GPIO {
+volatile struct GPIO {
 	unsigned DATA[1 << 12];
 	unsigned UNUSED[1 << 12];
 
@@ -79,7 +79,7 @@ volatile struct TMR16 {
 	unsigned PWMC;
 } extern TMR16B0;
 
-struct SYSCON {
+volatile struct SYSCON {
 	unsigned SYSMEMREMAP;          // 0
 
 	unsigned PRESETCTRL;           // 4
@@ -215,7 +215,7 @@ volatile struct ADC {
 	unsigned STAT;
 } extern ADC;
 
-struct SYSTICK {
+volatile struct SYSTICK {
 	unsigned __PADDING[4];
 	unsigned CSR;
 	unsigned RVR;
@@ -228,6 +228,7 @@ extern unsigned ICER;
 
 extern unsigned IOCON_PIO0_8;
 extern unsigned IOCON_R_PIO0_11;
+extern unsigned IOCON_PIO0_2;
 
 #define SET_LOW_16(reg, val) (reg) &= 0xFFFF0000; (reg) |= (val)
 #define GET_LOW_16(reg) ((reg) & 0x0000FFFF)
