@@ -17,9 +17,12 @@ void main();
 
 THREAD(__main__, __reset, 64, 0, 0, 0, 0);
 
-unsigned* __PSP = 0;
+unsigned __PSP = 0;
 
 thread_t* CURCTX = NULL;
+thread_t* RUNLIST = NULL;
+
+unsigned __RUN_MAIN_THREAD = 0;
 
 static void init_threads() {
 	unsigned thd_end = (unsigned)&__THREADS_END;
@@ -30,7 +33,7 @@ static void init_threads() {
 		
 		thread_t* thd = (thread_t*)(*as_double_p);
 
-		if (thd != CURCTX) {
+		if (thd != &__main__.thread) {
 			thread_append(thd);
 		}
 			
@@ -64,18 +67,25 @@ static void setup_data_and_bss() {
 	}
 }
 
-void __init_system() {	
+void __init_system() {
+	for (int i = 0; i < 30000000; ++i)
+		asm("");
+	
   setup_data_and_bss();
 	
 	CURCTX = &__main__.thread;
-	__PSP = &__main__.thread.sp;
+	__PSP = __main__.thread.sp;
 
 	init_threads();
 
-	GPIO1.DIR |= PIO_9;
-	
-	//__reset();
+	__reset();
+}
 
+void setup() {
+	GPIO1.DIR |= PIO_9;
+}
+
+void loop() {
 	main();
 }
 
@@ -240,7 +250,7 @@ void IRQ16() {
  */
 
 void systick_schedule() {
-	
+	main();
 }
 
 /*
@@ -248,8 +258,8 @@ void systick_schedule() {
  */
 
 void thread_append(thread_t* thd) {
-	if (CURCTX != NULL) {
-		thread_t* p = CURCTX;
+	if (RUNLIST != NULL) {
+		thread_t* p = RUNLIST;
 		
 		while (p->next != NULL) {
 			p = p->next;
@@ -257,8 +267,23 @@ void thread_append(thread_t* thd) {
 
 		p->next = thd;
 	} else {
-		CURCTX = thd;
+		RUNLIST = thd;
 	}
+}
+
+/*
+ * Thread-Next
+ */
+
+thread_t* thread_next() {
+	thread_t* k = NULL;
+
+	if (RUNLIST != NULL) {
+		k = RUNLIST;
+		RUNLIST = RUNLIST->next;
+	}
+	
+	return k;
 }
 
 /*

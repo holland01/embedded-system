@@ -47,7 +47,7 @@ struct {																														\
 };																																			\
 void * const __##name##__ptr __attribute__((section(".threads"))) = &name;
 
-extern unsigned* __PSP;
+extern unsigned __PSP;
 
 /* Setup-PLL
  * 
@@ -102,5 +102,13 @@ void enable_ints();
 
 void thread_append(thread_t* thd);
 
+/*
+ * Thread-Next
+ *
+ * Deque the next thread from RUNLIST.
+ * If RUNLIST is empty, NULL is returned.
+ */
+
+thread_t* thread_next();
 
 #endif // __FRAMEWORK_H__
