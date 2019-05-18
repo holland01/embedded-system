@@ -47,11 +47,12 @@ void default_irq() {
 }
 
 extern void __irq_generic();
+extern void __init_system();
 
 unsigned vector[48] __attribute__((section(".vector"))) = {
 	(unsigned)&__INITIAL_SP,
 
-	FUNC_ADDR(reset),
+	FUNC_ADDR(__init_system),
 	FUNC_ADDR(NMI),
 	FUNC_ADDR(hardfault),
 

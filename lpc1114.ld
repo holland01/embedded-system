@@ -16,9 +16,25 @@ SECTIONS {
               . = ALIGN(4);
        } > flash
 
+       .threads : {
+              *(.threads);
+              . = ALIGN(4);
+       } > flash
+
        .rodata : {
               . = ALIGN(4);
               *(.rodata);
+       } > flash      
+/*
+       .threads : {
+             . = ALIGN(4);
+             *(.threads);
+       } > flash
+*/
+       .init_array : {
+             . = ALIGN(4);
+             *(.init_array);
+             . = ALIGN(4);
        } > flash
 
        .data : {
@@ -32,15 +48,7 @@ SECTIONS {
              *(.bss);
        } > sram
 
-       .threads : {
-             . = ALIGN(4);
-             *(.threads);
-       } > sram
-
-       .init_array : {
-             . = ALIGN(4);
-             *(.init_array);
-       } > sram
+       
 
        __DATA_LMA = LOADADDR(.data);
        __DATA_END = LOADADDR(.data) + SIZEOF(.data);
@@ -57,7 +65,8 @@ SECTIONS {
 }
 
 __INITIAL_SP = ORIGIN(sram) + LENGTH(sram);
-__VECTOR_CHECKSUM = 0 - __INITIAL_SP - (reset + 1) - (NMI + 1) - (hardfault + 1);
+/*__VECTOR_CHECKSUM = 0 - __INITIAL_SP - (reset + 1) - (NMI + 1) - (hardfault + 1);*/
+__VECTOR_CHECKSUM = 0 - __INITIAL_SP - (__init_system + 1) - (NMI + 1) - (hardfault + 1);
 ISER = 0xE000E100;
 ICER = 0xE000E180;
 SYSCON = 0x40048000;

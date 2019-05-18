@@ -3,7 +3,7 @@ LD := ld-arm
 
 INCLUDE=./include
 
-FLAGS := -g -mcpu=cortex-m0 -I$(INCLUDE) -O0
+FLAGS := -g -ggdb -mcpu=cortex-m0 -I$(INCLUDE) -O0
 TARGET := servo
 
 SRC=./src
@@ -19,7 +19,7 @@ OPENOCD_TARGET := $(OPENOCD_ROOT)/target/lpc11xx.cfg
 OPENOCD_INTERFACE := $(OPENOCD_ROOT)/interface/stlink.cfg
 
 $(TARGET): $(OBJECTS) obj/irq.o
-	$(LD) -T lpc1114.ld -o $@ $^
+	$(LD) -M -T lpc1114.ld -o $@ $^ > $@.map
 
 objmake:
 	mkdir -p obj

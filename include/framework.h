@@ -10,17 +10,14 @@ struct thread {
 	unsigned sp;
 };
 
-extern const void* __THREADS_START;
-extern const void* __THREADS_END;
-
 extern const ctor_t* __INIT_ARRAY_START;
 extern const ctor_t* __INIT_ARRAY_END;
 
 extern thread_t* CURCTX;
 
 #define THREAD(name, function, stacksize, arg0, arg1, arg2, arg3)			\
-	struct {																														\
-	thread_t thread;																										\
+struct {																														\
+  thread_t thread;																											\
 	unsigned stack[(stacksize) - 16];																		\
 	unsigned r8;																												\
 	unsigned r9;																												\
@@ -38,7 +35,7 @@ extern thread_t* CURCTX;
 	unsigned lr;																												\
 	void*    pc;																												\
 	unsigned psr;																												\
-} static name = {																											\
+} static name = {																										\
 	{ NULL, (unsigned)(&(name.r8)) },																		\
   { 0 },																															\
 	0, 0, 0, 0,																													\
@@ -46,10 +43,10 @@ extern thread_t* CURCTX;
 	(arg0), (arg1), (arg2), (arg3),																				\
 	0, 0,																																	\
 	(function),																														\
-	(1 << 24)																															\
+	(1 << 24)																														\
 };																																			\
- const void * __##name##__ptr __attribute__((section("*.threads"))) = &name; \
-const void * __##name##__ctor __attribute__((section("*.init_array"))) = (function);
+void * const __##name##__ptr __attribute__((section(".threads"))) = &name; \
+void * const __##name##__ctor __attribute__((section(".init_array"))) = (function);
 
 extern unsigned* __PSP;
 
