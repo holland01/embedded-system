@@ -21,8 +21,7 @@ unsigned __PSP = 0;
 
 thread_t* CURCTX = NULL;
 thread_t* RUNLIST = NULL;
-
-unsigned __RUN_MAIN_THREAD = 0;
+thread_t* FREELIST = NULL;
 
 static void init_threads() {
 	unsigned thd_end = (unsigned)&__THREADS_END;
@@ -34,7 +33,7 @@ static void init_threads() {
 		thread_t* thd = (thread_t*)(*as_double_p);
 
 		if (thd != &__main__.thread) {
-			thread_append(thd);
+			thread_append(&RUNLIST, thd);
 		}
 			
 		thd_iter += 4;
@@ -67,10 +66,7 @@ static void setup_data_and_bss() {
 	}
 }
 
-void __init_system() {
-	for (int i = 0; i < 30000000; ++i)
-		asm("");
-	
+void __init_system() {	
   setup_data_and_bss();
 	
 	CURCTX = &__main__.thread;
@@ -81,12 +77,38 @@ void __init_system() {
 	__reset();
 }
 
-void setup() {
+void systick_on() {
+	SYST.RVR |= (48000 * 10) - 1;
+
+	SYST.CVR &= ~((1 << 24) - 1);
+
+	SYST.CSR |= 1 << 0;
+	SYST.CSR |= 1 << 1;
+	SYST.CSR |= 1 << 2;
+}
+
+void systick_off() {
+	SYST.CSR &= ~(1 << 0);
+	SYST.CSR &= ~(1 << 1);
+}
+
+void setup() {	
+	setup_pll();
+	
 	GPIO1.DIR |= PIO_9;
+	GPIO1.DATA[PIO_9] = 0;
+	
+	systick_on();
 }
 
 void loop() {
-	main();
+	for (int i = 0; i < 1000000; ++i) {
+		asm("");
+	}
+
+	GPIO1.DATA[PIO_9] ^= PIO_9;
+	
+	//asm volatile("wfi");
 }
 
 /*
@@ -97,15 +119,11 @@ void loop() {
  */
 
 void main() {
-	while (1) {
-		for (int i = 0; i < 1000000; ++i) {
-			asm("");
-		}
-
-		GPIO1.DATA[PIO_9] ^= PIO_9;
-		
-		//asm("wfi");
+	for (int i = 0; i < 1000000; ++i) {
+		asm("");
 	}
+
+	GPIO1.DATA[PIO_9] ^= PIO_9;
 }
 
 static inline void set_pll_ctrl(unsigned MSEL, unsigned PSEL) {
@@ -250,16 +268,33 @@ void IRQ16() {
  */
 
 void systick_schedule() {
-	main();
+	//	asm("cpsid i");
+
+	systick_off();
+	
+	if (RUNLIST != NULL) {
+		thread_t* next = thread_next(&RUNLIST);
+		
+		CURCTX = next;
+
+		thread_append(&FREELIST, next);
+	} else {
+		CURCTX = &__main__.thread;
+
+		RUNLIST = FREELIST;
+		FREELIST = NULL;
+	}
+	
+	systick_on();
 }
 
 /*
  * Thread-Append
  */
 
-void thread_append(thread_t* thd) {
-	if (RUNLIST != NULL) {
-		thread_t* p = RUNLIST;
+void thread_append(thread_t** root, thread_t* thd) {
+	if (*root != NULL) {
+		thread_t* p = *root;
 		
 		while (p->next != NULL) {
 			p = p->next;
@@ -267,7 +302,7 @@ void thread_append(thread_t* thd) {
 
 		p->next = thd;
 	} else {
-		RUNLIST = thd;
+		*root = thd;
 	}
 }
 
@@ -275,12 +310,12 @@ void thread_append(thread_t* thd) {
  * Thread-Next
  */
 
-thread_t* thread_next() {
+thread_t* thread_next(thread_t** root) {
 	thread_t* k = NULL;
 
-	if (RUNLIST != NULL) {
-		k = RUNLIST;
-		RUNLIST = RUNLIST->next;
+	if (*root != NULL) {
+		k = *root;
+		*root = (*root)->next;
 	}
 	
 	return k;

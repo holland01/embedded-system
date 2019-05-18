@@ -100,7 +100,7 @@ void enable_ints();
  * in a round-robin fashion.
  */
 
-void thread_append(thread_t* thd);
+void thread_append(thread_t** head, thread_t* thd);
 
 /*
  * Thread-Next
@@ -109,6 +109,6 @@ void thread_append(thread_t* thd);
  * If RUNLIST is empty, NULL is returned.
  */
 
-thread_t* thread_next();
+thread_t* thread_next(thread_t** head);
 
 #endif // __FRAMEWORK_H__

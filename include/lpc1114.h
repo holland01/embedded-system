@@ -215,6 +215,14 @@ volatile struct ADC {
 	unsigned STAT;
 } extern ADC;
 
+struct SYSTICK {
+	unsigned __PADDING[4];
+	unsigned CSR;
+	unsigned RVR;
+	unsigned CVR;
+	unsigned CALIB;
+} extern SYST;
+
 extern unsigned ISER;
 extern unsigned ICER;
 

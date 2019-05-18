@@ -105,6 +105,8 @@ unsigned vector[48] __attribute__((section(".vector"))) = {
 	FUNC_ADDR(__irq_generic)
 };
 
+extern void systick_schedule();
+
 const unsigned __irq_handlers[48] = {
 	0,
 	0,
@@ -122,7 +124,7 @@ const unsigned __irq_handlers[48] = {
 	0,
 	0,
 	0,
-	0, /* sys-tick */
+	FUNC_ADDR(systick_schedule), /* sys-tick */
 	0,
 	0,
 	0,
