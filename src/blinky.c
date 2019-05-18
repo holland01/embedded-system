@@ -1,6 +1,8 @@
 #include "lpc1114.h"
 #include "framework.h"
 
+#if 0
+
 void blink(int pin, int delay);
 
 THREAD(one, blink, 64, PIO_1, 1000000, 0, 0);
@@ -49,3 +51,4 @@ void HardFault () {
 void loop () {
 	asm("wfi");
 }
+#endif

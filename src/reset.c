@@ -3,14 +3,16 @@
 
 
 extern void setup() __attribute__((weak));
-extern void loop();
+extern void loop() __attribute__((weak));
 
 void reset() {	
-	if (setup) { 
+	if (setup != NULL) { 
 		setup();
 	}
-	
-	while (1) {
-		loop();
+
+	if (loop != NULL) {
+		while (1) {
+			loop();
+		}
 	}
 }

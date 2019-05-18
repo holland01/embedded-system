@@ -45,8 +45,7 @@ struct {																														\
 	(function),																														\
 	(1 << 24)																														\
 };																																			\
-void * const __##name##__ptr __attribute__((section(".threads"))) = &name; \
-void * const __##name##__ctor __attribute__((section(".init_array"))) = (function);
+void * const __##name##__ptr __attribute__((section(".threads"))) = &name;
 
 extern unsigned* __PSP;
 

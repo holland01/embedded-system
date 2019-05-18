@@ -1,7 +1,7 @@
 #include "lpc1114.h"
 #include "framework.h"
 
-extern void __reset() __attribute__((section("*.text")));
+extern void __reset() __attribute__((section(".text")));
 
 extern unsigned __DATA_LMA;
 extern unsigned __DATA_END;
@@ -13,27 +13,13 @@ extern unsigned __BSS_END;
 extern void* __THREADS_START;
 extern void* __THREADS_END;
 
+void main();
+
 THREAD(__main__, __reset, 64, 0, 0, 0, 0);
 
 unsigned* __PSP = 0;
 
 thread_t* CURCTX = NULL;
-
-static void* reverse_endian(void* x) {
-	unsigned char* y = x;
-
-	unsigned char a = y[0];
-	unsigned char b = y[1];
-	unsigned char c = y[2];
-	unsigned char d = y[3];
-	
-	return (void*)(
-								   ((unsigned)a << 24)
-								 | ((unsigned)b << 16)
-								 | ((unsigned)c << 8)
-								 |  (unsigned)d
-								 );
-}
 
 static void init_threads() {
 	unsigned thd_end = (unsigned)&__THREADS_END;
@@ -41,7 +27,6 @@ static void init_threads() {
 	
 	while (thd_iter < thd_end) {
 		void** as_double_p = (void**) thd_iter;
-		//void* e = reverse_endian(*as_double_p);
 		
 		thread_t* thd = (thread_t*)(*as_double_p);
 
@@ -55,10 +40,10 @@ static void init_threads() {
 
 static volatile unsigned GREAT_SUCCESS = 0x1337;
 
-static void init_sections() {
+static void setup_data_and_bss() {
 	{
-	  unsigned* from = &__DATA_LMA; // location in flash
-		unsigned* to = &__DATA_VMA; // location in sram
+	  unsigned* from = &__DATA_LMA; 
+		unsigned* to = &__DATA_VMA;
 		unsigned* end = &__DATA_END;
 	
 		while (from != end) {
@@ -79,16 +64,38 @@ static void init_sections() {
 	}
 }
 
-void __init_system() {
-	for (int i = 0; i < 30000000; ++i)
-		asm("");
-	
-	init_sections();
+void __init_system() {	
+  setup_data_and_bss();
 	
 	CURCTX = &__main__.thread;
 	__PSP = &__main__.thread.sp;
 
 	init_threads();
+
+	GPIO1.DIR |= PIO_9;
+	
+	//__reset();
+
+	main();
+}
+
+/*
+ * Main
+ *
+ * The function for the main thread.
+ * Currently a basic do-nothing function.
+ */
+
+void main() {
+	while (1) {
+		for (int i = 0; i < 1000000; ++i) {
+			asm("");
+		}
+
+		GPIO1.DATA[PIO_9] ^= PIO_9;
+		
+		//asm("wfi");
+	}
 }
 
 static inline void set_pll_ctrl(unsigned MSEL, unsigned PSEL) {
@@ -228,6 +235,8 @@ void IRQ16() {
  *
  * Interrupted by SysTick,
  * every 10 milliseconds
+ * we provide the context
+ * for the next thread
  */
 
 void systick_schedule() {
