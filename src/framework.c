@@ -147,8 +147,6 @@ static void setup_data_and_bss() {
  *
  */
 
-
-
 /*
  * Initialize-System
  */

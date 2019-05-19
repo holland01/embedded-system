@@ -1,5 +1,12 @@
+/*
+ * Macros
+ */
 
 #define FUNC_ADDR(x) ((unsigned)(x) + 1)
+
+/*
+ * External dependencies
+ */
 
 extern void hardfault() __attribute__((weak, alias("default_hardfault")));									  
 extern void NMI() __attribute__((weak, alias("default_NMI")));
@@ -9,46 +16,17 @@ extern void reset();
 extern unsigned __INITIAL_SP;
 extern unsigned __VECTOR_CHECKSUM;
 
-#define DEFAULTIRQ __attribute__((weak, alias("default_irq")))
-
-extern void IRQ0() DEFAULTIRQ;
-extern void IRQ1() DEFAULTIRQ;
-extern void IRQ2() DEFAULTIRQ;
-extern void IRQ3() DEFAULTIRQ;
-extern void IRQ4() DEFAULTIRQ;
-extern void IRQ5() DEFAULTIRQ;
-extern void IRQ6() DEFAULTIRQ;
-extern void IRQ7() DEFAULTIRQ;
-extern void IRQ8() DEFAULTIRQ;
-extern void IRQ9() DEFAULTIRQ;
-extern void IRQ10() DEFAULTIRQ;
-extern void IRQ11() DEFAULTIRQ;
-extern void IRQ12() DEFAULTIRQ;
-extern void IRQ13() DEFAULTIRQ;
-extern void IRQ14() DEFAULTIRQ;
-extern void IRQ15() DEFAULTIRQ;
-extern void IRQ16() DEFAULTIRQ;
-extern void IRQ17() DEFAULTIRQ;
-extern void IRQ18() DEFAULTIRQ;
-extern void IRQ19() DEFAULTIRQ;
-extern void IRQ20() DEFAULTIRQ;
-extern void IRQ21() DEFAULTIRQ;
-extern void IRQ22() DEFAULTIRQ;
-extern void IRQ23() DEFAULTIRQ;
-extern void IRQ24() DEFAULTIRQ;
-extern void IRQ25() DEFAULTIRQ;
-extern void IRQ26() DEFAULTIRQ;
-extern void IRQ27() DEFAULTIRQ;
-extern void IRQ28() DEFAULTIRQ;
-extern void IRQ29() DEFAULTIRQ;
-extern void IRQ30() DEFAULTIRQ;
-extern void IRQ31() DEFAULTIRQ;
-
-void default_irq() {
-}
-
 extern void __irq_generic();
+
+/* See framework.h and framework.c for __init_system() */
 extern void __init_system();
+
+/* SysTick function called via __irq_generic (see framework.h/framework.c) */
+extern void systick_schedule();
+
+/*
+ * Vector table
+ */
 
 unsigned vector[48] __attribute__((section(".vector"))) = {
 	(unsigned)&__INITIAL_SP,
@@ -70,7 +48,7 @@ unsigned vector[48] __attribute__((section(".vector"))) = {
 	0,
 	0,
 	0,
-	FUNC_ADDR(__irq_generic), /* SysTick interrupt */
+	FUNC_ADDR(__irq_generic), /* SysTick interrupt handler */
 	
 	FUNC_ADDR(__irq_generic),
 	FUNC_ADDR(__irq_generic),
@@ -106,8 +84,6 @@ unsigned vector[48] __attribute__((section(".vector"))) = {
 	FUNC_ADDR(__irq_generic)
 };
 
-extern void systick_schedule();
-
 const unsigned __irq_handlers[48] = {
 	0,
 	0,
@@ -125,7 +101,7 @@ const unsigned __irq_handlers[48] = {
 	0,
 	0,
 	0,
-	FUNC_ADDR(systick_schedule), /* sys-tick */
+	FUNC_ADDR(systick_schedule), 
 	0,
 	0,
 	0,
@@ -162,6 +138,10 @@ const unsigned __irq_handlers[48] = {
 	0,
 	0
 };
+
+/*
+ * Vector table weak symbol defaults
+ */
 
 void default_hardfault() {
 	while (1) {
