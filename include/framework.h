@@ -16,8 +16,8 @@ extern const ctor_t* __INIT_ARRAY_END;
 extern thread_t* CURCTX;
 
 #define THREAD(name, function, stacksize, arg0, arg1, arg2, arg3)			\
-struct {																														\
-  thread_t thread;																											\
+volatile struct {																											\
+	thread_t thread;																										\
 	unsigned stack[(stacksize) - 16];																		\
 	unsigned r8;																												\
 	unsigned r9;																												\
@@ -45,9 +45,9 @@ struct {																														\
 	(unsigned)((function) + 1),																						\
 	(1 << 24)																															\
 };																																			\
-void * const __##name##__ptr __attribute__((section(".threads"))) = &name;
+volatile void * const __##name##__ptr __attribute__((section(".threads"))) = &name;
 
-extern unsigned __PSP;
+extern volatile unsigned __PSP;
 
 /* Setup-PLL
  * 

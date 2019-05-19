@@ -229,6 +229,7 @@ extern unsigned ICER;
 extern unsigned IOCON_PIO0_8;
 extern unsigned IOCON_R_PIO0_11;
 extern unsigned IOCON_PIO0_2;
+extern unsigned IOCON_PIO0_1;
 
 #define SET_LOW_16(reg, val) (reg) &= 0xFFFF0000; (reg) |= (val)
 #define GET_LOW_16(reg) ((reg) & 0x0000FFFF)

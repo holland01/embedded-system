@@ -1,7 +1,7 @@
 #include "lpc1114.h"
 #include "framework.h"
 
-#define disable_int asm volatile("CPSIE i")
+#define disable_int asm volatile("CPSID i")
 #define enable_int asm volatile("CPSIE i")
 
 /* 
@@ -32,25 +32,25 @@ void loop();
 
 THREAD(__main__, 0, 64, 0, 0, 0, 0);
 
-unsigned __PSP = 0;
+volatile unsigned __PSP = 0;
 
 thread_t* CURCTX = NULL;
 thread_t* RUNLIST = NULL;
 thread_t* FREELIST = NULL;
 
 static void init_threads() {	
-	unsigned thd_end = (unsigned)&__THREADS_END;
-	unsigned thd_iter = (unsigned)&__THREADS_START;
+	volatile unsigned thd_end = (unsigned)&__THREADS_END;
+	volatile unsigned thd_iter = (unsigned)&__THREADS_START;
 	
 	while (thd_iter < thd_end) {
-		void** as_double_p = (void**) thd_iter;
+		volatile void** as_double_p = (volatile void**) thd_iter;
 		
-		thread_t* thd = (thread_t*)(*as_double_p);
+		volatile thread_t* thd = (volatile thread_t*)(*as_double_p);
 		
 		if (thd != &__main__.thread) {
 			thd->sp = (unsigned)thd + 8 + (48 * 4);
 			
-			thread_append(&RUNLIST, thd);
+			thread_append(&RUNLIST, (thread_t*)thd);
 		}
 
 					
@@ -87,7 +87,7 @@ void __init_system() {
 
 	setup_data_and_bss();
 	
-	CURCTX = &__main__.thread;
+	CURCTX = (thread_t*)&__main__.thread;
 	__PSP = __main__.thread.sp;
 
 	init_threads();
@@ -120,13 +120,18 @@ void setup() {
 	SYSCON.SYSAHBCLKCTRL |= 1 << 6;
 	GPIO0.DIR |= PIO_1 | PIO_2 | PIO_3;
 	//GPIO0.DATA[PIO_1 | PIO_2 | PIO_3] = 0;
-	GPIO0.DATA[PIO_2] = PIO_2;
+	GPIO0.DATA[PIO_2 | PIO_1] = 0;
 	
 	IOCON_PIO0_2 &= ~0x3; // clear
-	IOCON_PIO0_2 |= 0x1; // pio0_2
 	IOCON_PIO0_2 &= ~((1 << 3) | (1 << 4)); // inactive mode
 	IOCON_PIO0_2 &= ~(1 << 5); // disable hyst
 	IOCON_PIO0_2 &= ~(1 << 10); // standard gpio
+
+	IOCON_PIO0_1 &= ~0x3; // clear
+	IOCON_PIO0_1 &= ~((1 << 3) | (1 << 4)); // inactive mode
+	IOCON_PIO0_1 &= ~(1 << 5); // disable hyst
+	IOCON_PIO0_1 &= ~(1 << 10); // standard gpio
+
 	
 	systick_on();
 }
@@ -301,10 +306,10 @@ void systick_schedule() {
 		
 	} else {
 		
-		//CURCTX = &__main__.thread;
-
 		RUNLIST = FREELIST;
 		FREELIST = NULL;
+
+		CURCTX = RUNLIST;
 	}
 
 	enable_int;
@@ -338,8 +343,8 @@ thread_t* thread_next(thread_t** root) {
 
 	if (*root != NULL) {
 		k = *root;
-		k->next = NULL;
 		*root = (*root)->next;
+		k->next = NULL;
 	}
 	
 	return k;
