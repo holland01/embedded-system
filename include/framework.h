@@ -2,9 +2,10 @@
 #define __FRAMEWORK_H__
 
 /*
- * NOTE: .init_array is currently unused; it will
+ * TODO: .init_array is currently unused; it will
  * be implemented soon.
  */
+
 typedef void (*ctor_t)();
 
 extern const ctor_t* __INIT_ARRAY_START;
@@ -18,6 +19,16 @@ struct thread {
 };
 
 extern thread_t* CURCTX;
+
+/*
+ * TODO:
+ *
+ * The stack area for threads defined using this macro
+ * currently won't actually be used; as a result,
+ * it's necessary to compile this project using -O1.
+ *
+ * This will be fixed soon.
+ */
 
 #define THREAD(name, function, stacksize, arg0, arg1, arg2, arg3)			\
 volatile struct {																											\
