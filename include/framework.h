@@ -1,7 +1,14 @@
 #ifndef __FRAMEWORK_H__
 #define __FRAMEWORK_H__
 
+/*
+ * NOTE: .init_array is currently unused; it will
+ * be implemented soon.
+ */
 typedef void (*ctor_t)();
+
+extern const ctor_t* __INIT_ARRAY_START;
+extern const ctor_t* __INIT_ARRAY_END;
 
 typedef struct thread thread_t;
 
@@ -9,9 +16,6 @@ struct thread {
 	thread_t* next;
 	unsigned sp;
 };
-
-extern const ctor_t* __INIT_ARRAY_START;
-extern const ctor_t* __INIT_ARRAY_END;
 
 extern thread_t* CURCTX;
 
@@ -48,6 +52,72 @@ volatile struct {																											\
 volatile void * const __##name##__ptr __attribute__((section(".threads"))) = &name;
 
 extern volatile unsigned __PSP;
+
+/*
+ * Initialize-System
+ *
+ * Our true entry point.
+ * Here we ensure the data
+ * and bss segments are 
+ * properly handled;
+ * set a starting thread
+ * context with CURCTX;
+ * and the __PSP global
+ * that points to the initial
+ * stack pointer, which is later
+ * set to the actual psp register
+ * via __reset().
+ *
+ * Once __reset() is finished,
+ * we call reset(), which calls
+ * a user defined "setup()" function.
+ */
+
+void __init_system();
+
+/*
+ * System-Tick-Timer-On
+ *
+ * Used to initialize the system-tick-timer
+ * interrupt to a 10ms interval. The interrupt is 
+ * used to perform thread context
+ * switching. The interrupt code
+ * is defined in systick_schedule().
+ */
+
+void systick_on();
+
+/*
+ * Setup
+ *
+ * This is called by reset() (defined in reset.c).
+ * Sets the system clock to 48 MHZ using the PLL.
+ * Currently, anything else this does (GPIO setup, etc.)
+ * is subject to change, however details for those
+ * arbitrary specifics are provided in the definition.
+ */
+
+void setup();
+
+/*
+ * Loop 
+ *
+ * Not required,
+ * but if defined will be 
+ * continuously
+ * called in an iterative loop
+ * by the reset() function
+ *
+ * (at the time of this writing,
+ * it's somewhat a mixed bag because
+ * reset() essentially will be blown
+ * out of the picture via
+ * thread context switches, which
+ * will never return to the reset()
+ * function)
+ */
+
+void loop();
 
 /* Setup-PLL
  * 

@@ -1,20 +1,16 @@
 #include "lpc1114.h"
 #include "framework.h"
 
+/*
+ * Macros
+ */
+
 #define disable_int asm volatile("CPSID i")
 #define enable_int asm volatile("CPSIE i")
 
-/* 
- * for when monitor reset halt
- * doesn't restart properly
+/*
+ * External dependencies
  */
-static inline void debug_hang(int count) {
-	volatile int ccount = count * 1000000;
-	volatile int i = 0;
-	
-	while (i < ccount)
-		i++;
-}
 
 extern void __reset() __attribute__((section(".text")));
 
@@ -28,23 +24,79 @@ extern unsigned __BSS_END;
 extern void* __THREADS_START;
 extern void* __THREADS_END;
 
-void loop();
+/* 
+ * Internal global variables 
+ */
 
 THREAD(__main__, 0, 64, 0, 0, 0, 0);
 
-volatile unsigned __PSP = 0;
+/* 
+ * Global variables 
+ */
 
 thread_t* CURCTX = NULL;
 thread_t* RUNLIST = NULL;
 thread_t* FREELIST = NULL;
+
+volatile unsigned __PSP = 0;
+
+/*
+ * Internal function definitions
+ */
+
+/*
+ * Set Phase-Lock-Loop Control
+ *
+ * Just a utility function that ensures 
+ * SYSPLLCTRL MSEL and PSEL bitfields
+ * are set properly: the RESERVED
+ * bitfield must also be explicitly set
+ * to 0, otherwise the compiler will write
+ * a 1 to one of its bits.
+ */
+static inline void set_pll_ctrl(unsigned MSEL, unsigned PSEL) {
+	SYSCON.SYSPLLCTRL.MSEL = MSEL;
+	SYSCON.SYSPLLCTRL.PSEL = PSEL;
+
+	SYSCON.SYSPLLCTRL.RESERVED = 0; 
+}
+
+/* 
+ * Debug-Hang
+ *
+ * Nothing special: this is used
+ * occasionally to pause on startup.
+ * There have been times when 
+ * "monitor reset halt" hasn't
+ * worked as intended in gdb,
+ * for whatever reason.
+ */
+static inline void debug_hang(int count) {
+	volatile int ccount = count * 1000000;
+	volatile int i = 0;
+	
+	while (i < ccount) {
+		i++;
+	}
+}
+
+/*
+ * Init-Threads
+ *
+ * Any threads which have been 
+ * defined using the THREAD()
+ * macro (apart from the __main__ thread)
+ * will be appended to RUNLIST,
+ * which will be iterated over
+ * during interrupts.
+ */
 
 static void init_threads() {	
 	volatile unsigned thd_end = (unsigned)&__THREADS_END;
 	volatile unsigned thd_iter = (unsigned)&__THREADS_START;
 	
 	while (thd_iter < thd_end) {
-		volatile void** as_double_p = (volatile void**) thd_iter;
-		
+		volatile void** as_double_p = (volatile void**) thd_iter;		
 		volatile thread_t* thd = (volatile thread_t*)(*as_double_p);
 		
 		if (thd != &__main__.thread) {
@@ -53,10 +105,18 @@ static void init_threads() {
 			thread_append(&RUNLIST, (thread_t*)thd);
 		}
 
-					
 		thd_iter += 4;
 	}
 }
+
+/*
+ * Setup-Data-And-Bss
+ *
+ * Just as it says: transfer
+ * the data segment from its
+ * flash memory over to sram,
+ * and ensure that the BSS segment is set to zero.
+ */
 
 static void setup_data_and_bss() {
 	{
@@ -82,9 +142,18 @@ static void setup_data_and_bss() {
 	}
 }
 
-void __init_system() {	
-	//	debug_hang(20);
+/*
+ * Functions declared in framework.h
+ *
+ */
 
+
+
+/*
+ * Initialize-System
+ */
+
+void __init_system() {	
 	setup_data_and_bss();
 	
 	CURCTX = (thread_t*)&__main__.thread;
@@ -95,74 +164,108 @@ void __init_system() {
 	__reset();
 }
 
+/*
+ * System-Tick-Timer-On
+ * 
+ * SYST.RVR is set to 10 milliseconds for a 48 mhz
+ * CPU.
+ * 
+ * We clear out the counter register, CVR,
+ * which will fire the interrupt
+ * when the systick timer is enabled.
+ *
+ * Bit 0 of SYST.CSR enables the systic timer.
+ * Bit 1 of SYST.CSR enables the actual interrupt.
+ * Bit 2 of SYST.CSR ensures our clock is the system clock.
+ */
+
 void systick_on() {
-	SYST.RVR |= (48000 * 10) - 1; // 10 milliseconds for 48 mhz
+	SYST.RVR |= (48000 * 10) - 1; 
 
-	SYST.CVR &= ~((1 << 24) - 1); // clear the register
+	SYST.CVR &= ~((1 << 24) - 1);
 
-	SYST.CSR |= 1 << 0; // enable systic
-	SYST.CSR |= 1 << 1; // enable interrupt
-	SYST.CSR |= 1 << 2; // set clock to system clock
+	SYST.CSR |= 1 << 0; 
+	SYST.CSR |= 1 << 1; 
+	SYST.CSR |= 1 << 2;
 }
 
-void systick_off() {
-	SYST.CSR &= ~(1 << 0);
-	SYST.CSR &= ~(1 << 1);
-}
+/*
+ * Setup
+ *
+ * We set bit 6 to 1
+ * of SYSCON.SYSAHBCLKCTRL
+ * to enable the GPIO clock.
+ *
+ * We set PIO_1, PIO_2
+ * to be outputs for GPIO0, via GPIO0.DIR.
+ *
+ * We set each of those to low (off), via GPIO0.DATA.
+ *
+ * Then set both IOCON_PIO0_1 and IOCON_PIO0_2
+ * registers to ensure the settings for their
+ * respective pins are configured properly.
+ *
+ * The memory map for both of these registers is idential.
+ * (i.e., the following list applies to both)
+ *
+ * - &= ~0x3: zeros out bits [2:0]
+ *   a value of 0 for bits [2:0] indicates that the 
+ *   FUNC the pin is to be set to "PIO0".
+ *
+ * - &= ~((1 << 3) | (1 << 4)): zeros out bits [4:3]
+ *   a value of 0 for bits [4:3] indicates that the 
+ *   MODE for the pin is to be set to "inactive".
+ *   
+ * - &= ~(1 << 5): zeros out bit [5]
+ *   a value of 0 for bit [5] indicates that the 
+ *   HYS (for "hysteresis") be set to "disabled".
+ *
+ * - &= ~(1 << 10): zeros out bit [10]
+ *   a value of 0 for bit [10] indicates that the
+ *   OD (for "psuedo open-drain mode)" for the pin
+ *   is set to "standard GPIO output"
+ *
+ * Finally, we turn on the systick timer via
+ * systick_on()
+ */
 
 void setup() {	
 	setup_pll();
-	
-	GPIO1.DIR |= PIO_9;
-	GPIO1.DATA[PIO_9] = 0;
 
-	// GPIO clock enable
 	SYSCON.SYSAHBCLKCTRL |= 1 << 6;
-	GPIO0.DIR |= PIO_1 | PIO_2 | PIO_3;
-	//GPIO0.DATA[PIO_1 | PIO_2 | PIO_3] = 0;
-	GPIO0.DATA[PIO_2 | PIO_1] = 0;
-	
-	IOCON_PIO0_2 &= ~0x3; // clear
-	IOCON_PIO0_2 &= ~((1 << 3) | (1 << 4)); // inactive mode
-	IOCON_PIO0_2 &= ~(1 << 5); // disable hyst
-	IOCON_PIO0_2 &= ~(1 << 10); // standard gpio
 
-	IOCON_PIO0_1 &= ~0x3; // clear
-	IOCON_PIO0_1 &= ~((1 << 3) | (1 << 4)); // inactive mode
-	IOCON_PIO0_1 &= ~(1 << 5); // disable hyst
-	IOCON_PIO0_1 &= ~(1 << 10); // standard gpio
+	GPIO0.DIR |= PIO_1 | PIO_2;
 
+	GPIO0.DATA[PIO_1 | PIO_2] = 0;
+ 
+	IOCON_PIO0_1 &= ~0x3;
+	IOCON_PIO0_1 &= ~((1 << 3) | (1 << 4));
+	IOCON_PIO0_1 &= ~(1 << 5);
+	IOCON_PIO0_1 &= ~(1 << 10);
+
+	IOCON_PIO0_2 &= ~0x3;
+	IOCON_PIO0_2 &= ~((1 << 3) | (1 << 4));
+	IOCON_PIO0_2 &= ~(1 << 5);
+	IOCON_PIO0_2 &= ~(1 << 10);
 	
 	systick_on();
 }
 
-void loop() {
-	asm("wfi");
-}
-
 /*
- * Main
+ * Loop
  *
- * The function for the main thread.
- * Currently a basic do-nothing function.
+ * Currently a dead function;
+ * called by reset()...maybe,
+ * assuming the interrupt isn't
+ * fired before then. Either way,
+ * it only gets called once,
+ * since after the interrupt is 
+ * fired, only threads initially
+ * on the run list will be executed.
  */
 
-void main() {
-	for (int i = 0; i < 1000000; ++i) {
-		asm("");
-	}
-
-	GPIO1.DATA[PIO_9] ^= PIO_9;
-}
-
-static inline void set_pll_ctrl(unsigned MSEL, unsigned PSEL) {
-	SYSCON.SYSPLLCTRL.MSEL = MSEL;
-	SYSCON.SYSPLLCTRL.PSEL = PSEL;
-
-	// this must be explicitly zero'd out,
-	// otherwise the compiler will write a
-	// 1 to one of the reserved bits.
-	SYSCON.SYSPLLCTRL.RESERVED = 0; 
+void loop() {
+	asm("wfi");
 }
 
 /* Setup-PLL
@@ -336,6 +439,14 @@ void thread_append(thread_t** root, thread_t* thd) {
 
 /*
  * Thread-Next
+ *
+ * This may or may not be obvious 
+ * (at least at first glance):
+ * it's very important that 
+ * *root = (*root)->next is executed
+ * before k->next = NULL,
+ * since before then k and *root
+ * point to the same location :^)
  */
 
 thread_t* thread_next(thread_t** root) {
