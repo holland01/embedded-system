@@ -4,7 +4,7 @@ LD := ld-arm
 INCLUDE=./include
 
 FLAGS := -g -ggdb -mcpu=cortex-m0 -I$(INCLUDE) -O1
-TARGET := servo
+TARGET := lpc1114image.bin
 
 SRC=./src
 OBJ=./obj
