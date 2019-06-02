@@ -3,7 +3,7 @@ LD := ld-arm
 
 INCLUDE=./include
 
-FLAGS := -g -ggdb -mcpu=cortex-m0 -I$(INCLUDE) -O1
+FLAGS := -g -ggdb -mcpu=cortex-m0 -I$(INCLUDE) -O0
 TARGET := lpc1114image.bin
 
 SRC=./src

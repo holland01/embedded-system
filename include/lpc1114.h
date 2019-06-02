@@ -223,6 +223,25 @@ volatile struct SYSTICK {
 	unsigned CALIB;
 } extern SYST;
 
+volatile struct I2C {
+	unsigned CONSET;
+	unsigned STAT;
+	unsigned DAT;
+	unsigned ADR0;
+	unsigned SCLH;
+	unsigned SCLL;
+	unsigned CONCLR;
+	unsigned MMCTRL;
+	unsigned ADR1;
+	unsigned ADR2;
+	unsigned ADR3;
+	unsigned DATA_BUFFER;
+	unsigned MASK0;
+	Unsigned MASK1;
+	unsigned MASK2;
+	unsigned MASK3;
+} extern I2C0;
+
 extern unsigned ISER;
 extern unsigned ICER;
 
@@ -230,6 +249,9 @@ extern unsigned IOCON_PIO0_8;
 extern unsigned IOCON_R_PIO0_11;
 extern unsigned IOCON_PIO0_2;
 extern unsigned IOCON_PIO0_1;
+
+extern unsigned IOCON_PIO0_4;
+extern unsigned IOCON_PIO0_5;
 
 #define SET_LOW_16(reg, val) (reg) &= 0xFFFF0000; (reg) |= (val)
 #define GET_LOW_16(reg) ((reg) & 0x0000FFFF)
