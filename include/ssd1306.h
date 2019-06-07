@@ -2,7 +2,7 @@
 #define __SSD1306_H__
 
 // The ssd1306 will assume that every byte the follows a stream prefix is 
-of
+// of
 // that type.  For example, every byte from 0x40 to the stop bit is data.
 #define SSD1306_CMD_SINGLE  0x80
 #define SSD1306_CMD_STREAM  0x00
