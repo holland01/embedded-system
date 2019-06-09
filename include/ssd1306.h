@@ -54,5 +54,11 @@
 #define SSD1306_DESELECT_65VCC 0x00
 #define SSD1306_DESELECT_77VCC 0x20
 #define SSD1306_DESELECT_83VCC 0x30
+#define SSD1306_ADDR_READ_MASK 0xFFFFFF79
+#define SSD1306_ADDR_WRITE_MASK 0xFFFFFF78
+
+extern const unsigned char SSD1306_INIT[];
+
+extern const unsigned SSD1306_INIT_COUNT;
 
 #endif //

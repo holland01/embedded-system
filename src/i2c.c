@@ -1,4 +1,5 @@
 #include "lpc1114.h"
+#include "ssd1306.h"
 
 #define START       1
 #define RSTART      2
@@ -16,6 +17,11 @@
 #define STO  (1<<4)
 #define STA  (1<<5)
 #define I2EN (1<<6)
+
+#define I2C_CONSET_INIT(REG) ( ( (REG) & (~(AA | SI | STO | STA)) ) | I2EN )
+#define I2C_BIT_FREQ_100K(REG) (((REG) & 0xFFFF0000) | 0xF0) 
+#define I2C_MMCTRL_DISABLE(REG) ((REG) & (~0x1))
+
 
 /*
 *  STO             DATA
@@ -51,58 +57,103 @@
 *  another device.  The transfer failed and a start condition must be sent
 *  again.
 */
+
 /* IRQ15: I2C state change
-*
-*  Note that the following code only handles Master Write.
-*/
+ *
+ *  Note that the following code only handles Master Write.
+ */
+
+static unsigned __ptr = 0;
+
 void IRQ15() {
-	switch(I2C0.STAT>>3) {
-	case START:
-	case RSTART:
-		I2C0.DAT = /* Device Address*/;
-		I2C0.CONCLR = STA | STP | SI;
-		break;
-	case ADDR_W_ACK:
-	case WRITE_W_ACK:
-		if(/*Data to send*/) {
-			I2C0.DAT = /* Data to device */;
-			I2C0.CONCLR = STA | AA | SI;
-		}
-		else {
-			/* Signal success to the thread */
-			I2C0.CONSET = STO;
-			I2C0.CONCLR = STA | AA | SI;
-		}
-		break;
-	case ADDR_W_NACK:
-		/* Signal the error to the thread */
-		I2C0.CONSET = STO;
-		I2C0.CONCLR = STA | AA | SI;
-		break;
-	case DATA_W_NACK:
-		/* End of stream to device */
-		I2C0.CONSET = STO;
-		I2C0.CONCLR = STA | AA | SI;
-		break;
-	case BUS_LOST:
-		/* Signal the falure to the thread */
-		I2C0.CONCLR = STA | STO | AA | SI;
-		break;
-	}
+  switch(I2C0.STAT >> 3) {
+  case START:
+  case RSTART:
+    I2C0.DAT &= SSD1306_ADDR_WRITE_MASK /* Device Address*/;
+    I2C0.CONCLR = STA | STO | SI;
+    break;
+    
+  case ADDR_W_ACK:
+  case DATA_W_ACK:
+    /*Data to send*/
+    if (__ptr < SSD1306_INIT_COUNT) {
+      /* Data to device */
+      
+      I2C0.DAT &= (~0xFF) | (unsigned)(SSD1306_INIT[__ptr]);
+      I2C0.CONCLR = STA | AA | SI;
+      
+      __ptr++;
+    } else {
+      __ptr = 0;
+      /* Signal success to the thread */
+      I2C0.CONSET = STO;
+      I2C0.CONCLR = STA | AA | SI;
+    }
+    break;
+    
+  case ADDR_W_NACK:
+    /* Signal the error to the thread */
+    I2C0.CONSET = STO;
+    I2C0.CONCLR = STA | AA | SI;
+    break;
+    
+  case DATA_W_NACK:
+    /* End of stream to device */
+    I2C0.CONSET = STO;
+    I2C0.CONCLR = STA | AA | SI;
+    break;
+    
+  case BUS_LOST:
+    /* Signal the falure to the thread */
+    I2C0.CONCLR = STA | STO | AA | SI;
+    break;
+  }
+}
+
+static void d(int d) {
+  volatile int count = 0;
+  volatile int duration = d * 1000000;
+
+  while (count < duration) {
+    count++;
+  }
 }
 
 void I2C_init() {
-	// FUNC = I2C
-	IOCON_PIO0_4 |= 0x1;
-	// I2CMODE = Standard mode/ Fast-mode I2C
-	IOCON_PIO0_4 &= ~((1 << 8) | (1 << 9));
 
-	// FUNC = I2C
-	IOCON_PIO0_5 |= 0x1;
-	// I2CMODE = Standard mode/ Fast-mode I2C
-	IOCON_PIO0_5 &= ~((1 << 8) | (1 << 9));
+  d(150);
 
-	SYSCON.SYSAHBCLKCTRL
+    // (IC2 = Enable) | (IOCON = Enable)
+  SYSCON.SYSAHBCLKCTRL |= (1 << 5) | (1 << 16);
+  
+  // FUNC = I2C SCL
+  IOCON_PIO0_4 |= 0x1;
+  // I2CMODE = Standard mode/ Fast-mode I2C
+  IOCON_PIO0_4 &= ~((1 << 8) | (1 << 9));
+
+  // FUNC = I2C SDA
+  IOCON_PIO0_5 |= 0x1;
+  // I2CMODE = Standard mode/ Fast-mode I2C
+  IOCON_PIO0_5 &= ~((1 << 8) | (1 << 9));
+
+  // Reset I2C
+  SYSCON.PRESETCTRL |= 0x2;
+  
+  I2C0.SCLH = I2C_BIT_FREQ_100K(I2C0.SCLH);
+
+  I2C0.SCLL = I2C_BIT_FREQ_100K(I2C0.SCLL);
+
+  ISER = ISER_IRQ15_ENABLED;
+
+  //I2C0.MMCTRL = I2C_MMCTRL_DISABLE(I2C0.MMCTRL);
+
+  // 0x1 -> monitor mode enabled
+  // ~0x2 -> force SDL output to high
+  // 0x3 -> monitor all traffic on the bus
+  //  I2C0.MMCTRL &= ~0x2;
+  
+  I2C0.CONSET |= I2EN;
+  I2C0.CONSET |= STA;
 }
 
 

@@ -14,6 +14,8 @@
 
 extern void __reset() __attribute__((section(".text")));
 
+extern void I2C_init();
+
 extern unsigned __DATA_LMA;
 extern unsigned __DATA_END;
 extern unsigned __DATA_VMA;
@@ -55,10 +57,10 @@ volatile unsigned __PSP = 0;
  * a 1 to one of its bits.
  */
 static inline void set_pll_ctrl(unsigned MSEL, unsigned PSEL) {
-	SYSCON.SYSPLLCTRL.MSEL = MSEL;
-	SYSCON.SYSPLLCTRL.PSEL = PSEL;
+  SYSCON.SYSPLLCTRL.MSEL = MSEL;
+  SYSCON.SYSPLLCTRL.PSEL = PSEL;
 
-	SYSCON.SYSPLLCTRL.RESERVED = 0; 
+  SYSCON.SYSPLLCTRL.RESERVED = 0; 
 }
 
 /* 
@@ -72,12 +74,12 @@ static inline void set_pll_ctrl(unsigned MSEL, unsigned PSEL) {
  * for whatever reason.
  */
 static inline void debug_hang(int count) {
-	volatile int ccount = count * 1000000;
-	volatile int i = 0;
-	
-	while (i < ccount) {
-		i++;
-	}
+  volatile int ccount = count * 1000000;
+  volatile int i = 0;
+  
+  while (i < ccount) {
+    i++;
+  }
 }
 
 /*
@@ -91,22 +93,22 @@ static inline void debug_hang(int count) {
  * during interrupts.
  */
 
-static void init_threads() {	
-	volatile unsigned thd_end = (unsigned)&__THREADS_END;
-	volatile unsigned thd_iter = (unsigned)&__THREADS_START;
-	
-	while (thd_iter < thd_end) {
-		volatile void** as_double_p = (volatile void**) thd_iter;		
-		volatile thread_t* thd = (volatile thread_t*)(*as_double_p);
-		
-		if (thd != &__main__.thread) {
-			thd->sp = (unsigned)thd + 8 + (48 * 4);
-			
-			thread_append(&RUNLIST, (thread_t*)thd);
-		}
+static void init_threads() {  
+  volatile unsigned thd_end = (unsigned)&__THREADS_END;
+  volatile unsigned thd_iter = (unsigned)&__THREADS_START;
+  
+  while (thd_iter < thd_end) {
+    volatile void** as_double_p = (volatile void**) thd_iter;   
+    volatile thread_t* thd = (volatile thread_t*)(*as_double_p);
+    
+    if (thd != &__main__.thread) {
+      thd->sp = (unsigned)thd + 8 + (48 * 4);
+      
+      thread_append(&RUNLIST, (thread_t*)thd);
+    }
 
-		thd_iter += 4;
-	}
+    thd_iter += 4;
+  }
 }
 
 /*
@@ -119,27 +121,27 @@ static void init_threads() {
  */
 
 static void setup_data_and_bss() {
-	{
-	  unsigned* from = &__DATA_LMA; 
-		unsigned* to = &__DATA_VMA;
-		unsigned* end = &__DATA_END;
-	
-		while (from != end) {
-			*to = *from;
-			to++;
-			from++;
-		}
-	}
+  {
+    unsigned* from = &__DATA_LMA; 
+    unsigned* to = &__DATA_VMA;
+    unsigned* end = &__DATA_END;
+  
+    while (from != end) {
+      *to = *from;
+      to++;
+      from++;
+    }
+  }
 
-	{
-		unsigned* bss = &__BSS_VMA;
-		unsigned* bss_end = &__BSS_END;
+  {
+    unsigned* bss = &__BSS_VMA;
+    unsigned* bss_end = &__BSS_END;
 
-		while (bss != bss_end) {
-			*bss = 0;
-			bss++;
-		}
-	}
+    while (bss != bss_end) {
+      *bss = 0;
+      bss++;
+    }
+  }
 }
 
 /*
@@ -151,15 +153,14 @@ static void setup_data_and_bss() {
  * Initialize-System
  */
 
-void __init_system() {	
-	setup_data_and_bss();
-	
-	CURCTX = (thread_t*)&__main__.thread;
-	__PSP = __main__.thread.sp;
+void __init_system() {  
+  setup_data_and_bss();
+  
+  CURCTX = (thread_t*)&__main__.thread;
+  __PSP = __main__.thread.sp;
 
-	init_threads();
-
-	__reset();
+  //  init_threads();
+  __reset();
 }
 
 /*
@@ -178,13 +179,13 @@ void __init_system() {
  */
 
 void systick_on() {
-	SYST.RVR |= (48000 * 10) - 1; 
+  SYST.RVR |= (48000 * 10) - 1; 
 
-	SYST.CVR &= ~((1 << 24) - 1);
+  SYST.CVR &= ~((1 << 24) - 1);
 
-	SYST.CSR |= 1 << 0; 
-	SYST.CSR |= 1 << 1; 
-	SYST.CSR |= 1 << 2;
+  SYST.CSR |= 1 << 0; 
+  SYST.CSR |= 1 << 1; 
+  SYST.CSR |= 1 << 2;
 }
 
 /*
@@ -227,26 +228,28 @@ void systick_on() {
  * systick_on()
  */
 
-void setup() {	
-	setup_pll();
+void setup() {  
+  setup_pll();
 
-	SYSCON.SYSAHBCLKCTRL |= 1 << 6;
+  SYSCON.SYSAHBCLKCTRL |= 1 << 6;
 
-	GPIO0.DIR |= PIO_1 | PIO_2;
+  GPIO0.DIR |= PIO_1 | PIO_2;
 
-	GPIO0.DATA[PIO_1 | PIO_2] = 0;
+  GPIO0.DATA[PIO_1 | PIO_2] = 0;
  
-	IOCON_PIO0_1 &= ~0x3;
-	IOCON_PIO0_1 &= ~((1 << 3) | (1 << 4));
-	IOCON_PIO0_1 &= ~(1 << 5);
-	IOCON_PIO0_1 &= ~(1 << 10);
+  IOCON_PIO0_1 &= ~0x3;
+  IOCON_PIO0_1 &= ~((1 << 3) | (1 << 4));
+  IOCON_PIO0_1 &= ~(1 << 5);
+  IOCON_PIO0_1 &= ~(1 << 10);
 
-	IOCON_PIO0_2 &= ~0x3;
-	IOCON_PIO0_2 &= ~((1 << 3) | (1 << 4));
-	IOCON_PIO0_2 &= ~(1 << 5);
-	IOCON_PIO0_2 &= ~(1 << 10);
-	
-	systick_on();
+  IOCON_PIO0_2 &= ~0x3;
+  IOCON_PIO0_2 &= ~((1 << 3) | (1 << 4));
+  IOCON_PIO0_2 &= ~(1 << 5);
+  IOCON_PIO0_2 &= ~(1 << 10);
+
+  I2C_init();
+  
+  //  systick_on();
 }
 
 /*
@@ -263,7 +266,7 @@ void setup() {
  */
 
 void loop() {
-	asm("wfi");
+  asm("wfi");
 }
 
 /* Setup-PLL
@@ -274,19 +277,19 @@ void loop() {
  */
 
 void setup_pll() {
-	SYSCON.SYSPLLCLKSEL = SYSCON_SYSPLLCLK_IRC;
+  SYSCON.SYSPLLCLKSEL = SYSCON_SYSPLLCLK_IRC;
 
-	SYSCON.PDRUNCFG &= ~SYSCON_PDRUNCFG_SYSPLL_OFF; 
-	
-	set_pll_ctrl(3, 1);
-	
-	SYSCON.SYSPLLCLKUEN = 1;
-	
-	while (!SYSCON.SYSPLLSTAT)
-		asm("");
+  SYSCON.PDRUNCFG &= ~SYSCON_PDRUNCFG_SYSPLL_OFF; 
+  
+  set_pll_ctrl(3, 1);
+  
+  SYSCON.SYSPLLCLKUEN = 1;
+  
+  while (!SYSCON.SYSPLLSTAT)
+    asm("");
 
-	SYSCON.MAINCLKSEL = SYSCON_MAINCLKSEL_PLL;
-	SYSCON.MAINCLKUEN = 1;
+  SYSCON.MAINCLKSEL = SYSCON_MAINCLKSEL_PLL;
+  SYSCON.MAINCLKUEN = 1;
 }
 
 /* 
@@ -298,12 +301,12 @@ void setup_pll() {
  */
 
 void setup_iocon() {
-	SYSCON.SYSAHBCLKCTRL |= SYSCON_SYSAHBCLKCTRL_IOCON_ON;
+  SYSCON.SYSAHBCLKCTRL |= SYSCON_SYSAHBCLKCTRL_IOCON_ON;
 
-	IOCON_R_PIO0_11 = IOCON_R_PIO0_11_SET_AD0_INPUT;
+  IOCON_R_PIO0_11 = IOCON_R_PIO0_11_SET_AD0_INPUT;
 
-	IOCON_PIO0_8 &= ~((1 << 11) - 1); /* [2:0] FUNC = CT16B0_MAT0 */
-	IOCON_PIO0_8 |= 0x2;
+  IOCON_PIO0_8 &= ~((1 << 11) - 1); /* [2:0] FUNC = CT16B0_MAT0 */
+  IOCON_PIO0_8 |= 0x2;
 }
 
 /*
@@ -318,16 +321,16 @@ void setup_iocon() {
  */
 
 void setup_adc() {
-	SYSCON.SYSAHBCLKCTRL |= SYSCON_SYSAHBCLKCTRL_ADC_ON;
-	SYSCON.PDRUNCFG &= ~SYSCON_PDRUNCFG_ADC_OFF;
+  SYSCON.SYSAHBCLKCTRL |= SYSCON_SYSAHBCLKCTRL_ADC_ON;
+  SYSCON.PDRUNCFG &= ~SYSCON_PDRUNCFG_ADC_OFF;
 
-	ADC.CR = ADC_CR_SEL_SET_CHANNEL(0); 
-	ADC.CR = ADC_CR_CLKDIV_SET_VALUE(11);
-	ADC.CR = ADC_CR_BURST_SET_OFF;
-	ADC.CR = ADC_CR_CLKS_SET_11_CLK_10_BIT;
-	ADC.CR = ADC_CR_START_SET_NO_START;
+  ADC.CR = ADC_CR_SEL_SET_CHANNEL(0); 
+  ADC.CR = ADC_CR_CLKDIV_SET_VALUE(11);
+  ADC.CR = ADC_CR_BURST_SET_OFF;
+  ADC.CR = ADC_CR_CLKS_SET_11_CLK_10_BIT;
+  ADC.CR = ADC_CR_START_SET_NO_START;
 
-	ADC.INTEN = ADC_INTEN_SET_ADGINTEN_ONLY;
+  ADC.INTEN = ADC_INTEN_SET_ADGINTEN_ONLY;
 }
 
 /* 
@@ -340,10 +343,10 @@ void setup_adc() {
  */
 
 void enable_ints() {
-	asm volatile ("CPSIE i");
+  asm volatile ("CPSIE i");
 
-	ISER = ISER_IRQ24_ENABLED; 
-	ISER = ISER_IRQ16_ENABLED;
+  ISER = ISER_IRQ24_ENABLED; 
+  ISER = ISER_IRQ16_ENABLED;
 }
 
 /*
@@ -357,21 +360,21 @@ void enable_ints() {
  */
 
 void setup_timer() {
-	SYSCON.SYSAHBCLKCTRL |= SYSCON_SYSAHBCLKCTRL_CT16B0_ON;
+  SYSCON.SYSAHBCLKCTRL |= SYSCON_SYSAHBCLKCTRL_CT16B0_ON;
 
-	SET_LOW_16(TMR16B0.PR, 48); 
-	SET_LOW_16(TMR16B0.TC, 0);
-	SET_LOW_16(TMR16B0.PC, 0);
-	SET_LOW_16(TMR16B0.MR1, 20000); 
+  SET_LOW_16(TMR16B0.PR, 48); 
+  SET_LOW_16(TMR16B0.TC, 0);
+  SET_LOW_16(TMR16B0.PC, 0);
+  SET_LOW_16(TMR16B0.MR1, 20000); 
 
-	TMR16B0.MCR = TMR16B0_MCR_ENABLE_MR1_I;
-	TMR16B0.MCR = TMR16B0_MCR_ENABLE_MR1_R;
-	
-	TMR16B0.PWMC = TMR16B0_PWMC_ENABLE_MR0;
-	
-	TMR16B0.TCR |= 2; /* reset timer */
-	TMR16B0.TCR &= ~0x3;
-	TMR16B0.TCR |= 0x1; /* enable counter */
+  TMR16B0.MCR = TMR16B0_MCR_ENABLE_MR1_I;
+  TMR16B0.MCR = TMR16B0_MCR_ENABLE_MR1_R;
+  
+  TMR16B0.PWMC = TMR16B0_PWMC_ENABLE_MR0;
+  
+  TMR16B0.TCR |= 2; /* reset timer */
+  TMR16B0.TCR &= ~0x3;
+  TMR16B0.TCR |= 0x1; /* enable counter */
 }
 
 /*
@@ -381,11 +384,11 @@ void setup_timer() {
  * We start the ADC sample process here.
  */
 void IRQ16() {
-	TMR16B0.IR |= (1 << 1); /* set MR1 to HIGH */
-	ADC.CR |= (1 << 24); /* [26:24] START = Start conversion now */
-	
-	GPIO1.DATA[PIO_9] = 0;
-	GPIO0.DATA[PIO_8] = 0;
+  TMR16B0.IR |= (1 << 1); /* set MR1 to HIGH */
+  ADC.CR |= (1 << 24); /* [26:24] START = Start conversion now */
+  
+  GPIO1.DATA[PIO_9] = 0;
+  GPIO0.DATA[PIO_8] = 0;
 }
 
 /*
@@ -398,22 +401,22 @@ void IRQ16() {
  */
 
 void systick_schedule() {
-	disable_int;
+  disable_int;
 
-	if (RUNLIST != NULL) {		
-		thread_t* next = thread_next(&RUNLIST);
-		CURCTX = next;
-		thread_append(&FREELIST, next);
-		
-	} else {
-		
-		RUNLIST = FREELIST;
-		FREELIST = NULL;
+  if (RUNLIST != NULL) {    
+    thread_t* next = thread_next(&RUNLIST);
+    CURCTX = next;
+    thread_append(&FREELIST, next);
+    
+  } else {
+    
+    RUNLIST = FREELIST;
+    FREELIST = NULL;
 
-		CURCTX = RUNLIST;
-	}
+    CURCTX = RUNLIST;
+  }
 
-	enable_int;
+  enable_int;
 }
 
 /*
@@ -421,18 +424,18 @@ void systick_schedule() {
  */
 
 void thread_append(thread_t** root, thread_t* thd) {
-	if (*root != NULL) {
-		thread_t* p = *root;
+  if (*root != NULL) {
+    thread_t* p = *root;
     thd->next = NULL;
 
-		while (p->next != NULL) {
-			p = p->next;
-		}
+    while (p->next != NULL) {
+      p = p->next;
+    }
 
-		p->next = thd;
-	} else {
-		*root = thd;
-	}
+    p->next = thd;
+  } else {
+    *root = thd;
+  }
 }
 
 /*
@@ -448,15 +451,15 @@ void thread_append(thread_t** root, thread_t* thd) {
  */
 
 thread_t* thread_next(thread_t** root) {
-	thread_t* k = NULL;
+  thread_t* k = NULL;
 
-	if (*root != NULL) {
-		k = *root;
-		*root = (*root)->next;
-		k->next = NULL;
-	}
-	
-	return k;
+  if (*root != NULL) {
+    k = *root;
+    *root = (*root)->next;
+    k->next = NULL;
+  }
+  
+  return k;
 }
 
 /*
@@ -473,20 +476,20 @@ thread_t* thread_next(thread_t** root) {
 volatile unsigned IRQ24_TICK = 1;
 
 void IRQ24() {
-	volatile unsigned DONE = ADC.STAT & 1;
+  volatile unsigned DONE = ADC.STAT & 1;
 
-	if (DONE) {
-		volatile unsigned VREF = (ADC.R0 >> 6) & 0x3FF;
-		volatile unsigned MR1 = GET_LOW_16(TMR16B0.MR1);
-		
-		unsigned ROTATE = ((VREF) | 1) * IRQ24_TICK;
-		ROTATE &= 0x3ff;
-		
-		volatile unsigned WIDTH= MR1 - 500 - (ROTATE);
-		volatile unsigned TC = GET_LOW_16(TMR16B0.TC);
+  if (DONE) {
+    volatile unsigned VREF = (ADC.R0 >> 6) & 0x3FF;
+    volatile unsigned MR1 = GET_LOW_16(TMR16B0.MR1);
+    
+    unsigned ROTATE = ((VREF) | 1) * IRQ24_TICK;
+    ROTATE &= 0x3ff;
+    
+    volatile unsigned WIDTH= MR1 - 500 - (ROTATE);
+    volatile unsigned TC = GET_LOW_16(TMR16B0.TC);
 
-		IRQ24_TICK++;
-		
-		SET_LOW_16(TMR16B0.MR0, WIDTH);
-	}
+    IRQ24_TICK++;
+    
+    SET_LOW_16(TMR16B0.MR0, WIDTH);
+  }
 }

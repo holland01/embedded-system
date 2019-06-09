@@ -19,227 +19,227 @@
 #define PIO_11 (1 << 11)
 
 volatile struct GPIO {
-	unsigned DATA[1 << 12];
-	unsigned UNUSED[1 << 12];
+  unsigned DATA[1 << 12];
+  unsigned UNUSED[1 << 12];
 
-	unsigned DIR: 11;
-	unsigned : 21;
+  unsigned DIR: 11;
+  unsigned : 21;
 
-	unsigned IS: 11;
-	unsigned : 21;
+  unsigned IS: 11;
+  unsigned : 21;
 
-	unsigned IBE: 11;
-	unsigned : 21;
+  unsigned IBE: 11;
+  unsigned : 21;
 
-	unsigned IEV: 11;
-	unsigned : 21;
+  unsigned IEV: 11;
+  unsigned : 21;
 
-	unsigned IE: 11;
-	unsigned : 21;
+  unsigned IE: 11;
+  unsigned : 21;
 
-	unsigned RIS;
-	unsigned MIS;
-	
-	unsigned IC: 11;
-	unsigned : 21;
+  unsigned RIS;
+  unsigned MIS;
+  
+  unsigned IC: 11;
+  unsigned : 21;
 } extern GPIO1, GPIO0;
 
 volatile struct TMR16 {
-	unsigned IR;
-	
-	unsigned TCR;
-	
-	unsigned TC;  
+  unsigned IR;
+  
+  unsigned TCR;
+  
+  unsigned TC;  
 
-	unsigned PR;
-	
-	unsigned PC;
-	
+  unsigned PR;
+  
+  unsigned PC;
+  
     unsigned MCR;
-	
-	unsigned MR0;
-	
-	unsigned MR1;
-	
-	unsigned MR2;
+  
+  unsigned MR0;
+  
+  unsigned MR1;
+  
+  unsigned MR2;
 
-	unsigned MR3;
+  unsigned MR3;
 
-	unsigned CCR;
-	
-	unsigned CR0;
+  unsigned CCR;
+  
+  unsigned CR0;
 
-	unsigned __PADDING[3];
-	
-	unsigned EMR;
-	unsigned __RESERVED[12];
+  unsigned __PADDING[3];
+  
+  unsigned EMR;
+  unsigned __RESERVED[12];
 
-	unsigned CTCR;
-	
-	unsigned PWMC;
+  unsigned CTCR;
+  
+  unsigned PWMC;
 } extern TMR16B0;
 
 volatile struct SYSCON {
-	unsigned SYSMEMREMAP;          // 0
+  unsigned SYSMEMREMAP;          // 0
 
-	unsigned PRESETCTRL;           // 4
+  unsigned PRESETCTRL;           // 4
 
-	//    unsigned SYSPLLCTRL;           // 8
+  //    unsigned SYSPLLCTRL;           // 8
 
-	struct {
-		unsigned MSEL : 5;
-		unsigned PSEL : 2;
-		unsigned RESERVED : 25;
-	} SYSPLLCTRL;
-	
-	unsigned SYSPLLSTAT: 1;        // 12
-	unsigned SYSPLLSTAT_R: 31;
+  struct {
+    unsigned MSEL : 5;
+    unsigned PSEL : 2;
+    unsigned RESERVED : 25;
+  } SYSPLLCTRL;
+  
+  unsigned SYSPLLSTAT: 1;        // 12
+  unsigned SYSPLLSTAT_R: 31;
 
-	unsigned RESERVED0[4];         // 16, 20, 24, 28
-	
-	unsigned SYSOSCCTRL;           // 32
-	unsigned WDTOSCCTRL;           // 36
-	unsigned IRCCTRL;              // 40
-	
-	unsigned RESERVED1;            // 44
+  unsigned RESERVED0[4];         // 16, 20, 24, 28
+  
+  unsigned SYSOSCCTRL;           // 32
+  unsigned WDTOSCCTRL;           // 36
+  unsigned IRCCTRL;              // 40
+  
+  unsigned RESERVED1;            // 44
 
-	unsigned SYSRSTSTAT;           // 48
-	
-	unsigned RESERVED2[3];         // 52, 56, 60
-		
-	unsigned SYSPLLCLKSEL: 2;      // 64
-	unsigned SYSPLLCLKSEL_R: 30;
+  unsigned SYSRSTSTAT;           // 48
+  
+  unsigned RESERVED2[3];         // 52, 56, 60
+    
+  unsigned SYSPLLCLKSEL: 2;      // 64
+  unsigned SYSPLLCLKSEL_R: 30;
 
-	unsigned SYSPLLCLKUEN: 1;      // 68
-	unsigned SYSPLLCLKUEN_R: 31;
+  unsigned SYSPLLCLKUEN: 1;      // 68
+  unsigned SYSPLLCLKUEN_R: 31;
 
-	unsigned __RESERVED3[10];      // 72, 76, 80, 84, 88
+  unsigned __RESERVED3[10];      // 72, 76, 80, 84, 88
                                    // 92, 96, 100, 104, 108
-	
-	unsigned MAINCLKSEL:2;         // 112
-	unsigned MAINCLKSEL_R: 30;
-	
-	unsigned MAINCLKUEN: 1;        // 116
-	unsigned MAINCLKUEN_R: 31;
+  
+  unsigned MAINCLKSEL:2;         // 112
+  unsigned MAINCLKSEL_R: 30;
+  
+  unsigned MAINCLKUEN: 1;        // 116
+  unsigned MAINCLKUEN_R: 31;
 
-	unsigned SYSAHBCLKDIV;         // 120
+  unsigned SYSAHBCLKDIV;         // 120
 
-	unsigned RESERVED3;            // 124
-	
-	unsigned SYSAHBCLKCTRL;               // 128
+  unsigned RESERVED3;            // 124
+  
+  unsigned SYSAHBCLKCTRL;               // 128
 
-	unsigned RESERVED4[4];         // 132, 136, 140, 144
-	 
-	unsigned SSP0CLKDIV;           // 148
-	unsigned UARTCLKDIV;           // 152
-	unsigned SSP1CLKDIV;           // 156
+  unsigned RESERVED4[4];         // 132, 136, 140, 144
+   
+  unsigned SSP0CLKDIV;           // 148
+  unsigned UARTCLKDIV;           // 152
+  unsigned SSP1CLKDIV;           // 156
 
-	unsigned RESERVED5[12];        // 160, 164, 168, 172
-	                               // 176, 180, 184, 188
-	                               // 192, 196, 200, 204
+  unsigned RESERVED5[12];        // 160, 164, 168, 172
+                                 // 176, 180, 184, 188
+                                 // 192, 196, 200, 204
 
-	unsigned WDTCLKSEL;            // 208
-	unsigned WDTCLKUEN;            // 212
-	unsigned WDTCLKDIV;            // 216
+  unsigned WDTCLKSEL;            // 208
+  unsigned WDTCLKUEN;            // 212
+  unsigned WDTCLKDIV;            // 216
 
-	unsigned RESERVED6;            // 220
+  unsigned RESERVED6;            // 220
 
-	unsigned CLKOUTCLKSEL;         // 224
-	unsigned CLKOUTUEN;            // 228
-	unsigned CLKOUTCLKDIV;         // 232
+  unsigned CLKOUTCLKSEL;         // 224
+  unsigned CLKOUTUEN;            // 228
+  unsigned CLKOUTCLKDIV;         // 232
 
-	unsigned RESERVED7[5];         // 236, 240, 244, 248
-	                               // 252
-	
-	unsigned PIOPORCAP0;           // 256
-	unsigned PIOPORCAP1;           // 260
+  unsigned RESERVED7[5];         // 236, 240, 244, 248
+                                 // 252
+  
+  unsigned PIOPORCAP0;           // 256
+  unsigned PIOPORCAP1;           // 260
 
-	unsigned RESERVED8[18];        // 264, 268, 272, 276, 280, 284
-	                               // 288, 292, 296, 300, 304, 308
-	                               // 312, 316, 320, 324, 328, 332
+  unsigned RESERVED8[18];        // 264, 268, 272, 276, 280, 284
+                                 // 288, 292, 296, 300, 304, 308
+                                 // 312, 316, 320, 324, 328, 332
 
-	unsigned BODCTRL;              // 336
-	unsigned SYSTCKCAL;            // 340
+  unsigned BODCTRL;              // 336
+  unsigned SYSTCKCAL;            // 340
 
-	unsigned RESERVED9[6];         // 344, 348, 352, 356, 360, 364
+  unsigned RESERVED9[6];         // 344, 348, 352, 356, 360, 364
 
-	unsigned IRQLATENCY;           // 368
-	unsigned NMISRC;               // 372
+  unsigned IRQLATENCY;           // 368
+  unsigned NMISRC;               // 372
 
-	unsigned RESERVED10[34];       // 376, 380, 384, 388, 392,
-	                               // 396, 400, 404, 408, 412,
-	                               // 416, 420, 424, 428, 432,
-	                               // 436, 440
-	
-	                               // 444, 448
-	                               // 452, 456, 460, 464, 468,
-	                               // 472, 476, 480, 484, 488,
-	                               // 492, 496, 500, 504, 508
+  unsigned RESERVED10[34];       // 376, 380, 384, 388, 392,
+                                 // 396, 400, 404, 408, 412,
+                                 // 416, 420, 424, 428, 432,
+                                 // 436, 440
+  
+                                 // 444, 448
+                                 // 452, 456, 460, 464, 468,
+                                 // 472, 476, 480, 484, 488,
+                                 // 492, 496, 500, 504, 508
 
-	unsigned STARTAPRP0;           // 512
-	unsigned STARTERP0;            // 516
+  unsigned STARTAPRP0;           // 512
+  unsigned STARTERP0;            // 516
 
-	unsigned STARTRSPR0CLR;        // 520
-	unsigned STARTSRP0;            // 524
+  unsigned STARTRSPR0CLR;        // 520
+  unsigned STARTSRP0;            // 524
 
-	unsigned RESERVED11[8];        // 528, 532, 536, 540
+  unsigned RESERVED11[8];        // 528, 532, 536, 540
                                    // 544, 548, 552, 556
 
-	unsigned PDSLEEPCFG;           // 560
-	unsigned PDAWAKECFG;           // 564
+  unsigned PDSLEEPCFG;           // 560
+  unsigned PDAWAKECFG;           // 564
   
-	unsigned PDRUNCFG;                    // 568
+  unsigned PDRUNCFG;                    // 568
 
-	unsigned RESERVED12[110];
+  unsigned RESERVED12[110];
 
-	unsigned DEVICE_ID;
+  unsigned DEVICE_ID;
 } extern SYSCON;
 
 volatile struct ADC {
-	unsigned CR;
-	unsigned GD;
-	
-	unsigned __RESERVED0;
+  unsigned CR;
+  unsigned GD;
+  
+  unsigned __RESERVED0;
 
-	unsigned INTEN;
-	
-	unsigned R0;
-	unsigned R1;
-	unsigned R2;
-	unsigned R3;
-	unsigned R4;
-	unsigned R5;
-	unsigned R6;
-	unsigned R7;
-	
-	unsigned STAT;
+  unsigned INTEN;
+  
+  unsigned R0;
+  unsigned R1;
+  unsigned R2;
+  unsigned R3;
+  unsigned R4;
+  unsigned R5;
+  unsigned R6;
+  unsigned R7;
+  
+  unsigned STAT;
 } extern ADC;
 
 volatile struct SYSTICK {
-	unsigned __PADDING[4];
-	unsigned CSR;
-	unsigned RVR;
-	unsigned CVR;
-	unsigned CALIB;
+  unsigned __PADDING[4];
+  unsigned CSR;
+  unsigned RVR;
+  unsigned CVR;
+  unsigned CALIB;
 } extern SYST;
 
 volatile struct I2C {
-	unsigned CONSET;
-	unsigned STAT;
-	unsigned DAT;
-	unsigned ADR0;
-	unsigned SCLH;
-	unsigned SCLL;
-	unsigned CONCLR;
-	unsigned MMCTRL;
-	unsigned ADR1;
-	unsigned ADR2;
-	unsigned ADR3;
-	unsigned DATA_BUFFER;
-	unsigned MASK0;
-	Unsigned MASK1;
-	unsigned MASK2;
-	unsigned MASK3;
+  unsigned CONSET;
+  unsigned STAT;
+  unsigned DAT;
+  unsigned ADR0;
+  unsigned SCLH;
+  unsigned SCLL;
+  unsigned CONCLR;
+  unsigned MMCTRL;
+  unsigned ADR1;
+  unsigned ADR2;
+  unsigned ADR3;
+  unsigned DATA_BUFFER;
+  unsigned MASK0;
+  unsigned MASK1;
+  unsigned MASK2;
+  unsigned MASK3;
 } extern I2C0;
 
 extern unsigned ISER;
@@ -291,6 +291,7 @@ extern unsigned IOCON_PIO0_5;
 
 #define ISER_IRQ16_ENABLED (ISER | (1 << 16))
 #define ISER_IRQ24_ENABLED (ISER | (1 << 24))
+#define ISER_IRQ15_ENABLED (ISER | (1 << 15))
 
 #define TMR16B0_MCR_ENABLE_MR1_I (TMR16B0.MCR | (1 << 3))
 #define TMR16B0_MCR_ENABLE_MR1_R (TMR16B0.MCR | (1 << 4))
@@ -305,15 +306,15 @@ extern unsigned IOCON_PIO0_5;
 #define IOCON_R_PIO0_11_ADMODE_BIT (1 << 7) /* ON = digital functional, OFF = analog input */
 #define IOCON_R_PIO0_11_OD_BIT (1 << 10)
 
-#define IOCON_R_PIO0_11_SET_AD0_INPUT				\
-	( (IOCON_R_PIO0_11 &							\
-	   (~(											\
-		  IOCON_R_PIO0_11_FUNC_MASK					\
-		  | IOCON_R_PIO0_11_MODE_MASK				\
-		  | IOCON_R_PIO0_11_HYS_BIT					\
-		  | IOCON_R_PIO0_11_ADMODE_BIT				\
-		  | IOCON_R_PIO0_11_OD_BIT					\
-		  )))	                                    \
-	  | IOCON_R_PIO0_11_FUNC_AD0)
+#define IOCON_R_PIO0_11_SET_AD0_INPUT       \
+  ( (IOCON_R_PIO0_11 &              \
+     (~(                      \
+      IOCON_R_PIO0_11_FUNC_MASK         \
+      | IOCON_R_PIO0_11_MODE_MASK       \
+      | IOCON_R_PIO0_11_HYS_BIT         \
+      | IOCON_R_PIO0_11_ADMODE_BIT        \
+      | IOCON_R_PIO0_11_OD_BIT          \
+      )))                                     \
+    | IOCON_R_PIO0_11_FUNC_AD0)
 
 #endif // __LPC1114_H__
