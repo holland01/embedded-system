@@ -77,27 +77,35 @@ static unsigned __cmd_state[] = {
 
 #define TEXTBUFLEN 64
 
-static char* text_buffer[TEXTBUFLEN] = { 0 };
+static char* text_buffer[TEXTBUFLEN] = { "d i s p l a y m e" };
 
 struct cmd {
-	char* data;
+	const unsigned char* data;
 	unsigned data_length;
 	unsigned data_ptr;
 	unsigned state_length;
 	unsigned state_ptr;
 } __cmd = {
 	SSD1306_INIT,
-	SSD1306_INIT_cOUNT,
+	0,
 	0,
 	sizeof(__cmd_state) / sizeof(__cmd_state[0]),
 	0
 };
+
+void write_char(char* ch) {
+	
+}
 
 void write_clear() {
 	I2C0.DAT = (unsigned)(__cmd.data[__cmd.data_ptr]);
 	I2C0.CONCLR = STA | AA | SI;
 				
 	__cmd.data_ptr++;			
+}
+
+void init_cmd() {
+	__cmd.data_length = SSD1306_INIT_COUNT;
 }
 
 void IRQ15() {
@@ -142,11 +150,15 @@ void IRQ15() {
 			
 			switch (__cmd_state[__cmd.state_ptr]) {
 			case CMD_STATE_WRITE_TEXT:
-				__cmd.data_ptr = text_buffer;
+				__cmd.data = (const unsigned char*) text_buffer;
+				__cmd.data_ptr = 0;
 				__cmd.data_length = TEXTBUFLEN;
 				break;
 				
-			case CMD_STATE_END:				
+			case CMD_STATE_END:
+				__cmd.data = NULL;
+				__cmd.data_ptr = 0xFFFF;
+				__cmd.data_length = 0;
 				break;
 			}
 		} 
@@ -173,8 +185,8 @@ static void d(int d) {
 
 void I2C_init() {
 
-  d(150);
-
+  d(150);	
+	
     // (IC2 = Enable) | (IOCON = Enable)
   SYSCON.SYSAHBCLKCTRL |= (1 << 5) | (1 << 16);
   
@@ -203,7 +215,9 @@ void I2C_init() {
   // ~0x2 -> force SDL output to high
   // 0x3 -> monitor all traffic on the bus
   //  I2C0.MMCTRL &= ~0x2;
-  
+
+	init_cmd();
+	
   I2C0.CONSET |= I2EN;
   I2C0.CONSET |= STA;
 }
