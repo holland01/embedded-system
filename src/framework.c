@@ -1,5 +1,7 @@
 #include "lpc1114.h"
 #include "framework.h"
+#include "i2c.h"
+#include "ssd1306.h"
 
 /*
  * Macros
@@ -13,8 +15,6 @@
  */
 
 extern void __reset() __attribute__((section(".text")));
-
-extern void I2C_init();
 
 extern unsigned __DATA_LMA;
 extern unsigned __DATA_END;
@@ -248,7 +248,9 @@ void setup() {
   IOCON_PIO0_2 &= ~(1 << 10);
 
   I2C_init();
-  
+  SSD1306_init();
+  //SSD1306_clear_screen();
+  SSD1306_write("HEMLO", 5);
   //  systick_on();
 }
 

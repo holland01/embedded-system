@@ -58,55 +58,80 @@
 *  again.
 */
 
+#define DATA_BUFFER_LENGTH 256
+
+volatile struct {
+  unsigned char data[DATA_BUFFER_LENGTH];
+  unsigned data_length;
+  unsigned data_ptr;
+} static _I2CBUF = {
+  { 0 },
+  0,
+  0
+};
+
+static unsigned _I2C_busy = 0;
+
+static void __I2C_data_clear() {
+  _I2CBUF.data_ptr = 0;
+    
+  for (unsigned i = 0; i < DATA_BUFFER_LENGTH; ++i) {
+    _I2CBUF.data[i] = 0xCC;
+  }
+
+  _I2CBUF.data_length = 0;
+}
+
+static void __I2C_con_stop() {
+  _I2C_busy = 0;
+  I2C0.CONSET = STO;
+  I2C0.CONCLR = STA | AA | SI;  
+}
+
+void I2C_cat(const unsigned char* d, unsigned len) {
+  unsigned capacity = DATA_BUFFER_LENGTH - _I2CBUF.data_ptr;
+
+  if (capacity > 0) {
+    unsigned length = len < capacity ? len : capacity;
+    unsigned i = 0;
+    
+    while (i < length) {
+      _I2CBUF.data[_I2CBUF.data_ptr + i] = d[i];
+      i++;
+    }
+
+    _I2CBUF.data_length += length;
+  }
+}
+
+void I2C_push(unsigned char b) {
+  I2C_cat(&b, 1);
+}
+
+void I2C_conset_start() {
+  I2C0.CONSET |= STA;
+  _I2C_busy = 1;
+}
+
+unsigned I2C_busy() {
+  return _I2C_busy;
+}
+
+void I2C_block() {
+  while (I2C_busy()) {
+    asm("nop");
+  }
+
+  volatile unsigned x = 0;
+  while (x < 10000) {
+    x++;
+  }
+}
+
 /* IRQ15: I2C state change
  *
  *  Note that the following code only handles Master Write.
  */
-
-enum {
-	CMD_STATE_INIT = 0,
-	CMD_STATE_WRITE_TEXT,
-	CMD_STATE_END
-};
-
-static unsigned __cmd_state[] = {
-	CMD_STATE_INIT,
-	CMD_STATE_WRITE_TEXT,
-	CMD_STATE_END
-};
-
-#define TEXTBUFLEN 64
-
-static char* text_buffer[TEXTBUFLEN] = { "d i s p l a y m e" };
-
-struct cmd {
-	const unsigned char* data;
-	unsigned data_length;
-	unsigned data_ptr;
-	unsigned state_length;
-	unsigned state_ptr;
-} __cmd = {
-	SSD1306_INIT,
-	0,
-	0,
-	sizeof(__cmd_state) / sizeof(__cmd_state[0]),
-	0
-};
-
-void write_char(char* ch) {
-	
-}
-
-void write_clear() {
-	I2C0.DAT = (unsigned)(__cmd.data[__cmd.data_ptr]);
-	I2C0.CONCLR = STA | AA | SI;
-				
-	__cmd.data_ptr++;			
-}
-
-void init_cmd() {
-	__cmd.data_length = SSD1306_INIT_COUNT;
-}
 
 void IRQ15() {
   switch(I2C0.STAT >> 3) {
@@ -119,74 +144,42 @@ void IRQ15() {
   case ADDR_W_ACK:
   case DATA_W_ACK:
     /*Data to send*/
-    if (__cmd.data_ptr < __cmd.data_length) {
-			if (__cmd_state[__cmd.state_ptr] == CMD_STATE_WRITE_TEXT) {
-				if (__cmd.data[__cmd.data_ptr] == 0) {
-					__cmd.data_length = __cmd.data_ptr;
-				} else {
-					write_clear();
-				}
-			} else {
-				write_clear();
-			}
-    } else {			
-      /* Signal success to the thread */
-      I2C0.CONSET = STO;
+    if (_I2CBUF.data_ptr < _I2CBUF.data_length) {
+      I2C0.DAT = (unsigned)(_I2CBUF.data[_I2CBUF.data_ptr]);
       I2C0.CONCLR = STA | AA | SI;
+      
+      _I2CBUF.data_ptr++;
+    } else {      
+      /* Signal success to the thread */
+      __I2C_con_stop();
+      __I2C_data_clear();
     }
     break;
     
   case ADDR_W_NACK:
     /* Signal the error to the thread */
-    I2C0.CONSET = STO;
-    I2C0.CONCLR = STA | AA | SI;
+    __I2C_con_stop();
+    __I2C_data_clear();
     break;
     
   case DATA_W_NACK:
-		__cmd.data_ptr = 0;
-		
-		if (__cmd.state_ptr < __cmd.state_length) {
-			__cmd.state_ptr++;
-			
-			switch (__cmd_state[__cmd.state_ptr]) {
-			case CMD_STATE_WRITE_TEXT:
-				__cmd.data = (const unsigned char*) text_buffer;
-				__cmd.data_ptr = 0;
-				__cmd.data_length = TEXTBUFLEN;
-				break;
-				
-			case CMD_STATE_END:
-				__cmd.data = NULL;
-				__cmd.data_ptr = 0xFFFF;
-				__cmd.data_length = 0;
-				break;
-			}
-		} 
+    
     /* End of stream to device */
-    I2C0.CONSET = STO;
-    I2C0.CONCLR = STA | AA | SI;
+    __I2C_con_stop();
+    __I2C_data_clear();
     break;
     
   case BUS_LOST:
     /* Signal the falure to the thread */
     I2C0.CONCLR = STA | STO | AA | SI;
+    _I2C_busy = 0;
+
+    __I2C_data_clear();
     break;
   }
 }
 
-static void d(int d) {
-  volatile int count = 0;
-  volatile int duration = d * 1000000;
-
-  while (count < duration) {
-    count++;
-  }
-}
-
 void I2C_init() {
-
-  d(150);	
-	
     // (IC2 = Enable) | (IOCON = Enable)
   SYSCON.SYSAHBCLKCTRL |= (1 << 5) | (1 << 16);
   
@@ -209,6 +202,8 @@ void I2C_init() {
 
   ISER = ISER_IRQ15_ENABLED;
 
+  __I2C_data_clear();
+  
   //I2C0.MMCTRL = I2C_MMCTRL_DISABLE(I2C0.MMCTRL);
 
   // 0x1 -> monitor mode enabled
@@ -216,10 +211,8 @@ void I2C_init() {
   // 0x3 -> monitor all traffic on the bus
   //  I2C0.MMCTRL &= ~0x2;
 
-	init_cmd();
-	
+  // Enable the I2C interface
   I2C0.CONSET |= I2EN;
-  I2C0.CONSET |= STA;
 }
 
 

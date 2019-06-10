@@ -57,8 +57,10 @@
 #define SSD1306_ADDR_READ_MASK 0xFFFFFF79
 #define SSD1306_ADDR_WRITE_MASK 0xFFFFFF78
 
-extern const unsigned char SSD1306_INIT[];
+void SSD1306_init();
 
-extern const unsigned SSD1306_INIT_COUNT;
+void SSD1306_write(char* text, unsigned length);
+
+void SSD1306_clear_screen();
 
 #endif //
