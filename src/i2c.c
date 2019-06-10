@@ -63,28 +63,65 @@
  *  Note that the following code only handles Master Write.
  */
 
-static unsigned __ptr = 0;
+enum {
+	CMD_STATE_INIT = 0,
+	CMD_STATE_WRITE_TEXT,
+	CMD_STATE_END
+};
+
+static unsigned __cmd_state[] = {
+	CMD_STATE_INIT,
+	CMD_STATE_WRITE_TEXT,
+	CMD_STATE_END
+};
+
+#define TEXTBUFLEN 64
+
+static char* text_buffer[TEXTBUFLEN] = { 0 };
+
+struct cmd {
+	char* data;
+	unsigned data_length;
+	unsigned data_ptr;
+	unsigned state_length;
+	unsigned state_ptr;
+} __cmd = {
+	SSD1306_INIT,
+	SSD1306_INIT_cOUNT,
+	0,
+	sizeof(__cmd_state) / sizeof(__cmd_state[0]),
+	0
+};
+
+void write_clear() {
+	I2C0.DAT = (unsigned)(__cmd.data[__cmd.data_ptr]);
+	I2C0.CONCLR = STA | AA | SI;
+				
+	__cmd.data_ptr++;			
+}
 
 void IRQ15() {
   switch(I2C0.STAT >> 3) {
   case START:
   case RSTART:
-    I2C0.DAT &= SSD1306_ADDR_WRITE_MASK /* Device Address*/;
+    I2C0.DAT = SSD1306_ADDR_WRITE_MASK /* Device Address*/;
     I2C0.CONCLR = STA | STO | SI;
     break;
     
   case ADDR_W_ACK:
   case DATA_W_ACK:
     /*Data to send*/
-    if (__ptr < SSD1306_INIT_COUNT) {
-      /* Data to device */
-      
-      I2C0.DAT &= (~0xFF) | (unsigned)(SSD1306_INIT[__ptr]);
-      I2C0.CONCLR = STA | AA | SI;
-      
-      __ptr++;
-    } else {
-      __ptr = 0;
+    if (__cmd.data_ptr < __cmd.data_length) {
+			if (__cmd_state[__cmd.state_ptr] == CMD_STATE_WRITE_TEXT) {
+				if (__cmd.data[__cmd.data_ptr] == 0) {
+					__cmd.data_length = __cmd.data_ptr;
+				} else {
+					write_clear();
+				}
+			} else {
+				write_clear();
+			}
+    } else {			
       /* Signal success to the thread */
       I2C0.CONSET = STO;
       I2C0.CONCLR = STA | AA | SI;
@@ -98,6 +135,21 @@ void IRQ15() {
     break;
     
   case DATA_W_NACK:
+		__cmd.data_ptr = 0;
+		
+		if (__cmd.state_ptr < __cmd.state_length) {
+			__cmd.state_ptr++;
+			
+			switch (__cmd_state[__cmd.state_ptr]) {
+			case CMD_STATE_WRITE_TEXT:
+				__cmd.data_ptr = text_buffer;
+				__cmd.data_length = TEXTBUFLEN;
+				break;
+				
+			case CMD_STATE_END:				
+				break;
+			}
+		} 
     /* End of stream to device */
     I2C0.CONSET = STO;
     I2C0.CONCLR = STA | AA | SI;
