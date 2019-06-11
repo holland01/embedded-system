@@ -1,7 +1,7 @@
 #include "lpc1114.h"
 #include "framework.h"
-#include "i2c.h"
-#include "ssd1306.h"
+//#include "i2c.h"
+//#include "ssd1306.h"
 
 /*
  * Macros
@@ -188,6 +188,10 @@ void systick_on() {
   SYST.CSR |= 1 << 2;
 }
 
+extern unsigned HARDFAULT_CODE;
+
+#define L(x) HARDFAULT_CODE = x
+
 /*
  * Setup
  *
@@ -228,11 +232,14 @@ void systick_on() {
  * systick_on()
  */
 
-void setup() {  
+void setup() {
+  L(0);
+  
   setup_pll();
 
   SYSCON.SYSAHBCLKCTRL |= 1 << 6;
-
+  
+#if 0
   GPIO0.DIR |= PIO_1 | PIO_2;
 
   GPIO0.DATA[PIO_1 | PIO_2] = 0;
@@ -246,7 +253,9 @@ void setup() {
   IOCON_PIO0_2 &= ~((1 << 3) | (1 << 4));
   IOCON_PIO0_2 &= ~(1 << 5);
   IOCON_PIO0_2 &= ~(1 << 10);
-
+#endif
+  // --- SCREEN
+#if 0
   I2C_init();
   
   SSD1306_init();
@@ -258,6 +267,23 @@ void setup() {
   SSD1306_set_page_range(0, 4);
   
   SSD1306_write_text(letters);
+#endif
+  // --- ADC
+
+  L(1);
+  setup_iocon();
+
+  L(2);
+  setup_adc();
+
+  L(3);
+  setup_timer();
+
+  L(4);
+  enable_ints();
+
+  L(5);
+  GPIO0.DATA[PIO_8] = 0;
 }
 
 /*
@@ -489,16 +515,20 @@ void IRQ24() {
   if (DONE) {
     volatile unsigned VREF = (ADC.R0 >> 6) & 0x3FF;
     volatile unsigned MR1 = GET_LOW_16(TMR16B0.MR1);
-    
+
+#ifdef MODULE_SERVO
     unsigned ROTATE = ((VREF) | 1) * IRQ24_TICK;
     ROTATE &= 0x3ff;
     
-    volatile unsigned WIDTH= MR1 - 500 - (ROTATE);
+    volatile unsigned WIDTH = MR1 - 500 - (ROTATE);
     volatile unsigned TC = GET_LOW_16(TMR16B0.TC);
 
-    IRQ24_TICK++;
-    
     SET_LOW_16(TMR16B0.MR0, WIDTH);
+#else
+    asm("nop");
+#endif
+
+    IRQ24_TICK++;
   }
 }
 

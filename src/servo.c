@@ -17,17 +17,17 @@
  */
 
 void setup() {
-	setup_pll();
-	
-	enable_ints();
+  setup_pll();
+  
+  enable_ints();
 
-	setup_iocon();
-	setup_adc();
-	setup_timer();
-	
-	GPIO0.DATA[PIO_8] = 0;
-	GPIO1.DIR |=  PIO_9;
-	GPIO1.DATA[PIO_9] = 0;
+  setup_iocon();
+  setup_adc();
+  setup_timer();
+  
+  GPIO0.DATA[PIO_8] = 0;
+  GPIO1.DIR |= PIO_9;
+  GPIO1.DATA[PIO_9] = 0;
 }
 
 /* Loop
@@ -36,7 +36,7 @@ void setup() {
 
 #define COUNT 120000
 void loop() {
-	asm volatile("wfi");
+  asm volatile("wfi");
 }
 
 /* IRQ30
@@ -50,28 +50,28 @@ void loop() {
 /*
 const
 struct {
-	unsigned MSEL;
-	unsigned PSEL;
+  unsigned MSEL;
+  unsigned PSEL;
 } speeds [] =
-	{
-		{3, 1}, {2, 2}, {1, 2}, {0, 3}
-	};
+  {
+    {3, 1}, {2, 2}, {1, 2}, {0, 3}
+  };
 int speed = 0;
 void IRQ30() {
-	GPIO1.IC = PIO_8;
-	SYSCON.MAINCLKSEL = 0;
-	SYSCON.MAINCLKUEN = 1;
-	speed = (speed + 1) & 0x3;
-	//SYSCON.SYSPLLCTRL.MSEL = speeds[speed].MSEL;
-	//SYSCON.SYSPLLCTRL.PSEL = speeds[speed].PSEL;
+  GPIO1.IC = PIO_8;
+  SYSCON.MAINCLKSEL = 0;
+  SYSCON.MAINCLKUEN = 1;
+  speed = (speed + 1) & 0x3;
+  //SYSCON.SYSPLLCTRL.MSEL = speeds[speed].MSEL;
+  //SYSCON.SYSPLLCTRL.PSEL = speeds[speed].PSEL;
 
-	set_pll_ctrl(speeds[speed].MSEL, speeds[speed].PSEL);
+  set_pll_ctrl(speeds[speed].MSEL, speeds[speed].PSEL);
 
-	SYSCON.SYSPLLCLKUEN    = 1;
-	while (!SYSCON.SYSPLLSTAT)
-		asm("");
-	SYSCON.MAINCLKSEL = 3;
-	SYSCON.MAINCLKUEN = 1;
+  SYSCON.SYSPLLCLKUEN    = 1;
+  while (!SYSCON.SYSPLLSTAT)
+    asm("");
+  SYSCON.MAINCLKSEL = 3;
+  SYSCON.MAINCLKUEN = 1;
 }
 
 */

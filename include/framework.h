@@ -151,6 +151,15 @@ void setup_pll();
 
 void setup_timer();
 
+/*
+ * Setup-ADC
+ *
+ * Initializes any necessary analog to digital conversion
+ * components
+ */
+
+void setup_adc();
+
 /* 
  * Setup-IOCON
  *

@@ -24,7 +24,11 @@ extern void __init_system();
 /* SysTick function called via __irq_generic (see framework.h/framework.c) */
 extern void systick_schedule();
 
-extern void IRQ15();
+extern void IRQ15() __attribute__((weak, alias("IRQ15_stub")));
+
+void IRQ15_stub() {
+
+}
 
 
 #ifndef LPC1114_ENABLE_IRQ_PASSTHROUGH
