@@ -5,6 +5,16 @@
 #define NULL 0
 #endif
 
+#ifndef true
+#define true 1
+#endif
+
+#ifndef false
+#define false 0
+#endif
+
+typedef unsigned bool;
+
 #define PIO_0 (1 << 0)
 #define PIO_1 (1 << 1)
 #define PIO_2 (1 << 2)

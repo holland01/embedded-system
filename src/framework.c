@@ -248,10 +248,16 @@ void setup() {
   IOCON_PIO0_2 &= ~(1 << 10);
 
   I2C_init();
+  
   SSD1306_init();
-  //SSD1306_clear_screen();
-  SSD1306_write("HEMLO", 5);
-  //  systick_on();
+  SSD1306_clear_screen();
+
+  const char* letters = "Hello World";
+
+  SSD1306_set_col_range(0, strlen(letters) * 6);
+  SSD1306_set_page_range(0, 4);
+  
+  SSD1306_write_text(letters);
 }
 
 /*
@@ -494,4 +500,18 @@ void IRQ24() {
     
     SET_LOW_16(TMR16B0.MR0, WIDTH);
   }
+}
+
+/*
+ * String-Length
+ */
+
+unsigned strlen(const char* str) {
+  unsigned count = 0;
+  while (*str) {
+    str++;
+    count++;
+  }
+
+  return count;
 }

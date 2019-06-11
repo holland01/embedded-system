@@ -70,7 +70,16 @@ volatile struct {
   0
 };
 
-static unsigned _I2C_busy = 0;
+static volatile bool _I2C_busy = false;
+
+/* Defined in vector.c */
+extern volatile unsigned HARDFAULT_CODE;
+extern void hardfault();
+
+static void __I2C_die(unsigned state) {
+  HARDFAULT_CODE = state;
+  hardfault();
+}
 
 static void __I2C_data_clear() {
   _I2CBUF.data_ptr = 0;
@@ -89,14 +98,14 @@ static void __I2C_con_stop() {
 }
 
 void I2C_cat(const unsigned char* d, unsigned len) {
-  unsigned capacity = DATA_BUFFER_LENGTH - _I2CBUF.data_ptr;
+  unsigned capacity = DATA_BUFFER_LENGTH - _I2CBUF.data_length;
 
   if (capacity > 0) {
     unsigned length = len < capacity ? len : capacity;
     unsigned i = 0;
     
     while (i < length) {
-      _I2CBUF.data[_I2CBUF.data_ptr + i] = d[i];
+      _I2CBUF.data[_I2CBUF.data_length + i] = d[i];
       i++;
     }
 
@@ -113,16 +122,13 @@ void I2C_conset_start() {
   _I2C_busy = 1;
 }
 
-unsigned I2C_busy() {
-  return _I2C_busy;
-}
-
 void I2C_block() {
-  while (I2C_busy()) {
+  while (_I2C_busy) {
     asm("nop");
   }
 
   volatile unsigned x = 0;
+
   while (x < 10000) {
     x++;
   }
@@ -134,6 +140,8 @@ void I2C_block() {
  */
 
 void IRQ15() {
+  asm("cpsid i");
+  
   switch(I2C0.STAT >> 3) {
   case START:
   case RSTART:
@@ -157,19 +165,24 @@ void IRQ15() {
     break;
     
   case ADDR_W_NACK:
+    __I2C_die(ADDR_W_NACK);
     /* Signal the error to the thread */
     __I2C_con_stop();
     __I2C_data_clear();
     break;
     
   case DATA_W_NACK:
-    
+    __I2C_die(DATA_W_NACK);
     /* End of stream to device */
     __I2C_con_stop();
     __I2C_data_clear();
+
+    HARDFAULT_CODE = DATA_W_NACK;
     break;
     
   case BUS_LOST:
+    __I2C_die(BUS_LOST);
+    
     /* Signal the falure to the thread */
     I2C0.CONCLR = STA | STO | AA | SI;
     _I2C_busy = 0;
@@ -177,6 +190,8 @@ void IRQ15() {
     __I2C_data_clear();
     break;
   }
+
+  asm("cpsie i");
 }
 
 void I2C_init() {

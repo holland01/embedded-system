@@ -1,7 +1,10 @@
 #include "ssd1306.h"
 #include "i2c.h"
+#include "framework.h"
 
-const char __6x14[2][95][6] = {
+
+
+const char __6x14[2 * 95 * 6] = {
   /* Top Half */
   0x00, 0x00, 0x00, 0x00, 0x00, 0x00, /*  32 space */
   0x00, 0x00, 0x00, 0xfc, 0x00, 0x00, /*  33 exclam */
@@ -202,8 +205,9 @@ static const unsigned char SSD1306_INIT[] = {
   SSD1306_SET_MPLEX,     0x3f,
   SSD1306_DISP_OFFSET,   0x00,
   SSD1306_DISP_START_LINE(0),
-  SSD1306_SEG_REMAP(1),
+  SSD1306_SEG_REMAP(1), // was originally 1
   SSD1306_COM_REVERSE,
+  //SSD1306_COM_FORWARD,
   SSD1306_COM_HW_CONF,   0x12,
   SSD1306_SET_CONTRAST,  0x7F,
   SSD1306_ENTIRE_ON_RAM,
@@ -221,15 +225,17 @@ static const unsigned SSD1306_INIT_COUNT = sizeof(SSD1306_INIT) / sizeof(SSD1306
 static void __SSD1306_push_char(char c, unsigned half) {
   unsigned k = 0;
 
-  volatile unsigned char place[6] = {
-    0x04, 0x04, 0x04, 0xc4, 0x34, 0x0c /* 7 */
-  };
+  //  volatile unsigned char place[6] = {
+  //  0x04, 0x04, 0x04, 0xc4, 0x34, 0x0c /* 7 */
+  //};
+
+  unsigned char_index = (unsigned)c - 32;
+  unsigned row = char_index * 6;
+  unsigned slice = half * 95 * 6;
   
   while (k < 6) {
-    //    unsigned char_index = (unsigned)c - 32;
-    //  unsigned char row_byte = __6x14[half][char_index][k];
+    unsigned char row_byte = __6x14[slice + row + k];
 
-    unsigned char row_byte = place[k];
     I2C_push(row_byte);
     
     k++;
@@ -242,15 +248,23 @@ void SSD1306_init() {
   I2C_block();
 }
 
-void SSD1306_write(char* text, unsigned length) {
+void SSD1306_write_text(const char* text) {
+  unsigned length = strlen(text);
+
   I2C_push(SSD1306_DATA_STREAM);
-  
-  unsigned i = 0; 
-  //while (i < length) {
-  while (i < 50) {
-    __SSD1306_push_char(text[0], 0);
-    __SSD1306_push_char(text[0], 1);
     
+  unsigned i = 0; 
+  while (i < length) {
+    __SSD1306_push_char(text[i], 0);  
+    i++;
+  }
+
+  // I2C_conset_start();
+  // I2C_block();
+  
+  i = 0;
+  while (i < length) {
+    __SSD1306_push_char(text[i], 1);
     i++;
   }
 
@@ -260,10 +274,43 @@ void SSD1306_write(char* text, unsigned length) {
 
 void SSD1306_clear_screen() {
   char blank[128];
-
-  for (volatile unsigned i = 0; i < 128; ++i) {
+  for (volatile unsigned i = 0; i < 127; ++i) {
     blank[i] = ' ';
   }
+  blank[127] = '\0';
+  
+  for (unsigned k = 0; k < 7; ++k) {
+    SSD1306_set_page(k);
+    SSD1306_write_text(blank);
+  }
+}
 
-  SSD1306_write(blank, 128);
+void SSD1306_set_page(unsigned row) {
+  SSD1306_set_page_range(row, SSD1306_PAGE_END);
+}
+
+void SSD1306_set_col(unsigned col) {
+  SSD1306_set_page_range(col, SSD1306_COL_END);
+}
+
+void SSD1306_set_page_range(unsigned start, unsigned end) {
+  I2C_push(SSD1306_CMD_STREAM);
+  I2C_push(SSD1306_SET_PAGE_ADDR);
+
+  I2C_push((unsigned char)(start & SSD1306_PAGE_END));
+  I2C_push((unsigned char)(end &SSD1306_PAGE_END));
+
+  I2C_conset_start();
+  I2C_block();
+}
+
+void SSD1306_set_col_range(unsigned start, unsigned end) {
+  I2C_push(SSD1306_CMD_STREAM);
+  I2C_push(SSD1306_SET_COL_ADDR);
+
+  I2C_push((unsigned char)(start & SSD1306_COL_END));
+  I2C_push((unsigned char)(end & SSD1306_COL_END));
+  
+  I2C_conset_start();
+  I2C_block();
 }

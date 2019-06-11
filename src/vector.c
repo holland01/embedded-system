@@ -154,8 +154,11 @@ const unsigned __irq_handlers[48] = {
  * Vector table weak symbol defaults
  */
 
+volatile unsigned HARDFAULT_CODE = 0;
+
 void default_hardfault() {
   while (1) {
+    volatile unsigned dummy = HARDFAULT_CODE;
     asm("nop");
   }
 }

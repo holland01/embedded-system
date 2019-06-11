@@ -14,8 +14,8 @@ extern const ctor_t* __INIT_ARRAY_END;
 typedef struct thread thread_t;
 
 struct thread {
-	thread_t* next;
-	unsigned sp;
+  thread_t* next;
+  unsigned sp;
 };
 
 extern thread_t* CURCTX;
@@ -30,36 +30,36 @@ extern thread_t* CURCTX;
  * This will be fixed soon.
  */
 
-#define THREAD(name, function, stacksize, arg0, arg1, arg2, arg3)			\
-volatile struct {																											\
-	thread_t thread;																										\
-	unsigned stack[(stacksize) - 16];																		\
-	unsigned r8;																												\
-	unsigned r9;																												\
-	unsigned r10;																												\
-	unsigned r11;																												\
-	unsigned r4;																												\
-  unsigned r5;																												\
-  unsigned r6;																												\
-  unsigned r7;																												\
-	unsigned r0;																												\
-	unsigned r1;																												\
-	unsigned r2;																												\
-	unsigned r3;																												\
-	unsigned r12;																												\
-	unsigned lr;																												\
-	unsigned pc;																												\
-	unsigned psr;																												\
-	} static name = {																											\
-	{ NULL, (unsigned)(&(name.r8)) },																			\
-	{ 0 },																																\
-	0, 0, 0, 0,																														\
-	0x33, 0x22, 0x11, 0,																									\
-	(arg0), (arg1), (arg2), (arg3),																				\
-	0, 0,																																	\
-	(unsigned)((function) + 1),																						\
-	(1 << 24)																															\
-};																																			\
+#define THREAD(name, function, stacksize, arg0, arg1, arg2, arg3)     \
+volatile struct {                                                     \
+  thread_t thread;                                                    \
+  unsigned stack[(stacksize) - 16];                                   \
+  unsigned r8;                                                        \
+  unsigned r9;                                                        \
+  unsigned r10;                                                       \
+  unsigned r11;                                                       \
+  unsigned r4;                                                        \
+  unsigned r5;                                                        \
+  unsigned r6;                                                        \
+  unsigned r7;                                                        \
+  unsigned r0;                                                        \
+  unsigned r1;                                                        \
+  unsigned r2;                                                        \
+  unsigned r3;                                                        \
+  unsigned r12;                                                       \
+  unsigned lr;                                                        \
+  unsigned pc;                                                        \
+  unsigned psr;                                                       \
+  } static name = {                                                     \
+  { NULL, (unsigned)(&(name.r8)) },                                     \
+  { 0 },                                                                \
+  0, 0, 0, 0,                                                           \
+  0x33, 0x22, 0x11, 0,                                                  \
+  (arg0), (arg1), (arg2), (arg3),                                       \
+  0, 0,                                                                 \
+  (unsigned)((function) + 1),                                           \
+  (1 << 24)                                                             \
+};                                                                      \
 volatile void * const __##name##__ptr __attribute__((section(".threads"))) = &name;
 
 extern volatile unsigned __PSP;
@@ -191,5 +191,14 @@ void thread_append(thread_t** head, thread_t* thd);
  */
 
 thread_t* thread_next(thread_t** head);
+
+/*
+ * String-Length
+ *
+ * Counts each character until a null terminator
+ * is hit and returns the count
+ */
+
+unsigned strlen(const char* str);
 
 #endif // __FRAMEWORK_H__
