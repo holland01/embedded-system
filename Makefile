@@ -3,6 +3,9 @@ LD := ld-arm
 
 INCLUDE=./include
 
+LIBS=-L./lib -l:libgcc.a
+CCLIBS=#./lib/libgcc.a
+
 FLAGS := -g -ggdb -mcpu=cortex-m0 -I$(INCLUDE) -O0
 TARGET := lpc1114image.bin
 
@@ -12,23 +15,25 @@ OBJ=./obj
 SOURCES := $(wildcard $(SRC)/*.c)
 OBJECTS := $(patsubst $(SRC)/%.c, $(OBJ)/%.o, $(SOURCES))
 
+GCCOBJS := obj/lib/floatunsidf.o obj/lib/_clzsi2.o obj/lib/muldf3.o obj/lib/divdf3.o obj/lib/_udivsi3.o obj/lib/_dvmd_tls.o
+
 OPENOCD_ROOT := ../openocd/tcl
 
 OPENOCD_CMD_FLASH := "program $(TARGET) verify reset exit"
 OPENOCD_TARGET := $(OPENOCD_ROOT)/target/lpc11xx.cfg
 OPENOCD_INTERFACE := $(OPENOCD_ROOT)/interface/stlink.cfg
 
-$(TARGET): $(OBJECTS) obj/irq.o
-	$(LD) -M -T lpc1114.ld -o $@ $^ > $@.map
+$(TARGET): $(OBJECTS) obj/irq.o $(GCCOBJS)
+	$(LD) -M -T lpc1114.ld $(LIBS) -o $@ $^ > $@.map
 
 objmake:
-	mkdir -p obj
+	mkdir -p obj/lib
 
 $(OBJ)/irq.o: $(SRC)/irq.s objmake
-	$(CC) $(FLAGS) -c $< -o $@
+	$(CC) $(CCLIBS) $(FLAGS) -c $< -o $@
 
 $(OBJ)/%.o: $(SRC)/%.c objmake
-	$(CC) $(FLAGS) -c $< -o $@
+	$(CC) $(CCLIBS) $(FLAGS) -c $< -o $@
 
 flash:
 	cp $(TARGET) $(OPENOCD_ROOT)/$(TARGET)
