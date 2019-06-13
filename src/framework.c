@@ -1,8 +1,8 @@
 #include "lpc1114.h"
 #include "framework.h"
 
-//#include "i2c.h"
-//#include "ssd1306.h"
+#include "i2c.h"
+#include "ssd1306.h"
 
 /*
  * Macros
@@ -237,10 +237,9 @@ void setup() {
   SYSCON.SYSAHBCLKCTRL |= 1 << 6;
 
   GPIO1.DATA[PIO_9] = 0;
-  GPIO1.DIR |= PIO_9;
+  //GPIO1.DIR |= PIO_9;
   
-#if 0
-  GPIO0.DIR |= PIO_1 | PIO_2;
+  //GPIO0.DIR |= PIO_1 | PIO_2;
 
   GPIO0.DATA[PIO_1 | PIO_2] = 0;
  
@@ -253,14 +252,13 @@ void setup() {
   IOCON_PIO0_2 &= ~((1 << 3) | (1 << 4));
   IOCON_PIO0_2 &= ~(1 << 5);
   IOCON_PIO0_2 &= ~(1 << 10);
-#endif
   // --- SCREEN
-#if 0
+
   I2C_init();
   
   SSD1306_init();
   SSD1306_clear_screen();
-
+#if 0
   const char* letters = "Hello World";
 
   SSD1306_set_col_range(0, strlen(letters) * 6);
@@ -268,14 +266,11 @@ void setup() {
   
   SSD1306_write_text(letters);
 #endif
+
   // --- ADC
 
   setup_iocon();
   setup_adc();
-  setup_timer();
-  //enable_ints();
-
-  GPIO0.DATA[PIO_8] = 0;
 }
 
 /*
@@ -294,6 +289,8 @@ void setup() {
 void loop() {
   
   while (1) {
+    SSD1306_clear_screen();
+    
     ADC.CR |= (1 << 24); // start ADC conversion ([26:24])
 
     while (ADC.R0 < 0x7FFFFFFF) {
@@ -308,8 +305,13 @@ void loop() {
     //    volatile double R = (470.0 * vref) / (1.0 - vref);
 
     volatile double R = (v_out + 470) / (v_in - v_out);
-    
-    asm("nop");
+
+    SSD1306_print_num(R);
+
+    volatile unsigned delay = 0;
+    while (delay < 10000000) {
+      delay++;
+    }
   }
 }
 

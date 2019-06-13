@@ -30,6 +30,9 @@ void IRQ15_stub() {
 
 }
 
+extern void IRQ16();
+extern void IRQ24();
+
 
 #ifndef LPC1114_ENABLE_IRQ_PASSTHROUGH
 const unsigned __irq_handlers[48] = { 0 };
@@ -134,8 +137,8 @@ const unsigned __irq_handlers[48] = {
   0,
 
   0,
-  FUNC_ADDR(IRQ15),
-  0,
+  FUNC_ADDR(IRQ15), /* IRQ 15 */
+  FUNC_ADDR(IRQ16), /* IRQ 16 */
   0,
   0,
   0,
@@ -144,7 +147,7 @@ const unsigned __irq_handlers[48] = {
   0,
   0,
 
-  0,
+  FUNC_ADDR(IRQ24), /* IRQ 24 */
   0,
   0,
   0,

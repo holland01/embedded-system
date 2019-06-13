@@ -225,10 +225,6 @@ static const unsigned SSD1306_INIT_COUNT = sizeof(SSD1306_INIT) / sizeof(SSD1306
 static void __SSD1306_push_char(char c, unsigned half) {
   unsigned k = 0;
 
-  //  volatile unsigned char place[6] = {
-  //  0x04, 0x04, 0x04, 0xc4, 0x34, 0x0c /* 7 */
-  //};
-
   unsigned char_index = (unsigned)c - 32;
   unsigned row = char_index * 6;
   unsigned slice = half * 95 * 6;
@@ -239,6 +235,33 @@ static void __SSD1306_push_char(char c, unsigned half) {
     I2C_push(row_byte);
     
     k++;
+  }
+}
+
+#define char_buffer_len 8
+typedef char char_buffer_t[char_buffer_len];
+
+static void __SSD1306_num_to_text(unsigned x, char_buffer_t out, unsigned char *offset) {
+  *offset = 0;
+  out[char_buffer_len - 1] = '\0';
+
+  if (x <= SSD1306_MAX_PRINTABLE_VALUE) {
+    unsigned back_inserter = char_buffer_len - 2;
+    unsigned y = x;
+    
+    while (y > 0) {
+      unsigned digit = y % 10;
+
+      out[back_inserter] = (char)(digit + 0x30);
+      
+      back_inserter--;
+      
+      y /= 10;
+    }
+    
+    *offset = back_inserter + 1;
+  } else {
+    *offset = 0xFF; // failure
   }
 }
 
@@ -272,11 +295,59 @@ void SSD1306_write_text(const char* text) {
   I2C_block();
 }
 
+void SSD1306_print_num(double num) {
+  volatile double modf = num - (double)((unsigned) num);
+  
+  volatile unsigned mulp = (unsigned)(100.0 * modf);
+  volatile unsigned unum = (unsigned)num;
+
+  char_buffer_t radix_right;
+  unsigned char radix_right_ofs = 0;
+  __SSD1306_num_to_text(mulp, radix_right, &radix_right_ofs);
+
+  char_buffer_t radix_left;
+  unsigned char radix_left_ofs = 0;
+  __SSD1306_num_to_text(unum, radix_left, &radix_left_ofs);
+
+  char concat[24];
+  unsigned i = 0;
+
+  char* ptr = &radix_left[radix_left_ofs];
+  
+  while (*ptr) {
+    concat[i] = *ptr;
+    i++;
+    ptr++;
+  }
+
+  concat[i] = '.';
+  i++;
+  
+  ptr = &radix_right[radix_right_ofs];
+
+  while (*ptr) {
+    concat[i] = *ptr;
+    i++;
+    ptr++;
+  }
+
+  if (i < 24) {
+    concat[i] = '\0';
+
+    SSD1306_set_col_range(0, (i) * 6);
+    SSD1306_set_page_range(0, 3);
+    
+    SSD1306_write_text(concat);
+  }
+}
+
 void SSD1306_clear_screen() {
   char blank[128];
+
   for (volatile unsigned i = 0; i < 127; ++i) {
     blank[i] = ' ';
   }
+
   blank[127] = '\0';
   
   for (unsigned k = 0; k < 7; ++k) {

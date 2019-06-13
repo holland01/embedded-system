@@ -58,6 +58,7 @@
 #define SSD1306_ADDR_READ_MASK 0xFFFFFF79
 #define SSD1306_ADDR_WRITE_MASK 0xFFFFFF78
 
+#define SSD1306_MAX_PRINTABLE_VALUE 10000
 
 #define SSD1306_PAGE_END 0x07
 #define SSD1306_COL_END 0x7f
@@ -68,6 +69,8 @@ void SSD1306_init();
 void SSD1306_write_text(const char* text);
 
 void SSD1306_clear_screen();
+
+void SSD1306_print_num(double num);
 
 void SSD1306_set_page(unsigned row);
 

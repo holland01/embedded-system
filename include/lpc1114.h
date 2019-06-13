@@ -65,7 +65,7 @@ volatile struct TMR16 {
   
   unsigned PC;
   
-    unsigned MCR;
+  unsigned MCR;
   
   unsigned MR0;
   
@@ -277,27 +277,28 @@ extern unsigned IOCON_PIO0_5;
 #define SYSCON_SYSAHBCLKCTRL_IOCON_ON (1 << 16)
 
 #define ADC_CR_SEL_CLEAR_MASK (~0xFF)
-#define ADC_CR_SEL_CHANNEL_SHIFT(x) (1 << ((x))
-#define ADC_CR_SEL_SET_CHANNEL(x) ( (ADC.CR & ADC_CR_SEL_CLEAR_MASK) | ADC_CR_SEL_CHANNEL_SHIFT((x))) )
+#define ADC_CR_SEL_CHANNEL_SHIFT(x) (1 << (x))
+#define ADC_CR_SEL_SET_CHANNEL(x) ( (ADC.CR & ADC_CR_SEL_CLEAR_MASK) | ADC_CR_SEL_CHANNEL_SHIFT(x) )
 
 #define ADC_CR_BURST_ON (1 << 16)
 #define ADC_CR_BURST_SET_OFF (ADC.CR & (~ADC_CR_BURST_ON))
 
 #define ADC_CR_CLKDIV_CLEAR_MASK 0xFFFF00FF
-#define ADC_CR_CLKDIV_SHIFT(x) ((x) << 11)
+#define ADC_CR_CLKDIV_SHIFT(x) ((x) << 8)
 #define ADC_CR_CLKDIV_SET_VALUE(x) ((ADC.CR & ADC_CR_CLKDIV_CLEAR_MASK) | ADC_CR_CLKDIV_SHIFT((x)))
 
 #define ADC_CR_CLKS_MASK ((1 << 17) | (1 << 18) | (1 << 19))
-#define ADC_CR_CLKS_SET_11_CLK_10_BIT ((ADC.CR & ADC_CR_CLKS_MASK) | ~ADC_CR_CLKS_MASK)
+#define ADC_CR_CLKS_SET_11_CLK_10_BIT ( (ADC.CR & (~ADC_CR_CLKS_MASK)) )
 
 #define ADC_CR_START_MASK ((1 << 24) | (1 << 25) | (1 << 26))
 
 #define ADC_CR_START_SET_NO_START (ADC.CR & (~ADC_CR_START_MASK))
 
 #define ADC_INTEN_ADINTEN_CHANNEL(x) (1 << (x))
+#define ADC_INTEN_ADINTEN_CHANNEL_MASK ((1 << 0) | (1 << 1) | (1 << 2) | (1 << 3) | (1 << 4) | (1 << 5) | (1 << 6) | (1 << 7))
 #define ADC_INTEN_ADGINTEN (1 << 8)
 
-#define ADC_INTEN_SET_ADGINTEN_ONLY ((ADC.INTEN & (~ADC_INTEN_ADINTEN_CHANNEL(0))) | ADC_INTEN_ADGINTEN)
+#define ADC_INTEN_SET_ADGINTEN_ONLY ((ADC.INTEN & (~ADC_INTEN_ADINTEN_CHANNEL_MASK)) | ADC_INTEN_ADGINTEN)
 
 #define ISER_IRQ16_ENABLED (ISER | (1 << 16))
 #define ISER_IRQ24_ENABLED (ISER | (1 << 24))
@@ -309,21 +310,21 @@ extern unsigned IOCON_PIO0_5;
 #define TMR16B0_PWMC_ENABLE_MR0 (TMR16B0.PWMC | (1 << 0))
 
 #define IOCON_R_PIO0_11_FUNC_MASK ((1 << 0) | (1 << 1) | (1 << 2))
-#define IOCON_R_PIO0_11_FUNC_AD0 (1 << 2)
+#define IOCON_R_PIO0_11_FUNC_AD0 (1 << 1)
 
 #define IOCON_R_PIO0_11_MODE_MASK ((1 << 3) | (1 << 4))
 #define IOCON_R_PIO0_11_HYS_BIT (1 << 5)
 #define IOCON_R_PIO0_11_ADMODE_BIT (1 << 7) /* ON = digital functional, OFF = analog input */
 #define IOCON_R_PIO0_11_OD_BIT (1 << 10)
 
-#define IOCON_R_PIO0_11_SET_AD0_INPUT       \
-  ( (IOCON_R_PIO0_11 &              \
-     (~(                      \
-      IOCON_R_PIO0_11_FUNC_MASK         \
-      | IOCON_R_PIO0_11_MODE_MASK       \
-      | IOCON_R_PIO0_11_HYS_BIT         \
-      | IOCON_R_PIO0_11_ADMODE_BIT        \
-      | IOCON_R_PIO0_11_OD_BIT          \
+#define IOCON_R_PIO0_11_SET_AD0_INPUT         \
+  ( (IOCON_R_PIO0_11 &                        \
+     (~(                                      \
+        IOCON_R_PIO0_11_FUNC_MASK             \
+      | IOCON_R_PIO0_11_MODE_MASK             \
+      | IOCON_R_PIO0_11_HYS_BIT               \
+      | IOCON_R_PIO0_11_ADMODE_BIT            \
+      | IOCON_R_PIO0_11_OD_BIT                \
       )))                                     \
     | IOCON_R_PIO0_11_FUNC_AD0)
 

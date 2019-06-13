@@ -15,7 +15,20 @@ OBJ=./obj
 SOURCES := $(wildcard $(SRC)/*.c)
 OBJECTS := $(patsubst $(SRC)/%.c, $(OBJ)/%.o, $(SOURCES))
 
-GCCOBJS := obj/lib/floatunsidf.o obj/lib/_clzsi2.o obj/lib/muldf3.o obj/lib/divdf3.o obj/lib/_udivsi3.o obj/lib/_dvmd_tls.o
+GCCOBJS := obj/lib/floatunsidf.o \
+	obj/lib/_clzsi2.o \
+	obj/lib/muldf3.o \
+	obj/lib/divdf3.o \
+	obj/lib/_udivsi3.o \
+	obj/lib/_dvmd_tls.o \
+	obj/lib/subdf3.o \
+	obj/lib/adddf3.o \
+	obj/lib/_fixunsdfsi.o \
+	obj/lib/fixdfsi.o \
+	obj/lib/_arm_cmpdf2.o \
+	obj/lib/ledf2.o \
+	obj/lib/eqdf2.o \
+	obj/lib/gedf2.o
 
 OPENOCD_ROOT := ../openocd/tcl
 
