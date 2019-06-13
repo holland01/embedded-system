@@ -27,21 +27,123 @@ extern unsigned __BSS_END;
 extern void* __THREADS_START;
 extern void* __THREADS_END;
 
+static volatile unsigned SCHEDULE_COUNT = 0;
+
+void msleep(unsigned msec) {
+  // 1 / 48_000_000 ~= 20e-9
+  // so, 20 nanoseconds per clock cycle
+  // 13 clock cycles per iteration => 20 * 13 = 260 nanoseconds per iteration
+  // msec * 1e9 / 260 = iterations
+  unsigned iterations = (unsigned)((double)msec * 1.0e6 / 260.0);
+  volatile unsigned i = 0;
+  while (i < iterations) {
+    i++;
+  }
+}
+
 /* 
  * Internal global variables 
  */
 
+extern void adc_thread();
+
 THREAD(__main__, 0, 64, 0, 0, 0, 0);
+THREAD(display, SSD1306_display_thread, 128, 0, 0, 0, 0);
+THREAD(adc, adc_thread, 128, 0, 0, 0, 0);
+
+volatile struct {
+  bool off;
+  bool needs_reset;
+  unsigned counter;
+} static SYSTICK_STATE = {
+  false,
+  false,
+  0
+};
+
+void systick_disable() {
+  SYST.CSR &= ~0x1; // disable counter
+  SYST.CSR &= ~0x2; // disable interrupt
+
+  SYSTICK_STATE.off = true;
+  SYSTICK_STATE.counter = SYST.CVR & ((1 << 24) - 1); // grab all bits of the current value counter
+}
+
+void systick_force_switch() {
+  if (!SYSTICK_STATE.needs_reset) {
+    SYST.CSR &= ~0x1;
+    SYST.CSR &= ~0x2;
+
+    SYST.CVR &= ~((1 << 24) - 1);
+  
+    SYST.RVR |= 100; // bogus value to force switch
+    SYST.CSR |= 0x2; // enable interrupt
+    SYST.CSR |= 0x1; // enable counter
+
+    SYSTICK_STATE.needs_reset = true; // set back to normal 10 ms execution time when interrupt hits
+  }
+}
+
+void systick_enable() {
+  if (SYSTICK_STATE.off) {
+    SYSTICK_STATE.off = false;
+    // load reload value back in
+    //    SYSTICK.RVR |= SYSTICK_STATE.counter;
+    SYST.CSR |= 0x1; // enable counter
+    SYST.CSR |= 0x2; // enable interrupt
+  }
+}
+
+/*
+ * System-Tick-Timer-Reset
+ * 
+ * SYST.RVR is set to 10 milliseconds for a 48 mhz
+ * CPU.
+ * 
+ * We clear out the counter register, CVR,
+ * which will fire the interrupt
+ * when the systick timer is enabled.
+ *
+ * Bit 0 of SYST.CSR enables the systic timer.
+ * Bit 1 of SYST.CSR enables the actual interrupt.
+ * Bit 2 of SYST.CSR ensures our clock is the system clock.
+ */
+
+void systick_reset() {
+  SYST.RVR |= (48000 * 10) - 1; 
+
+  SYST.CVR &= ~((1 << 24) - 1);
+
+  SYST.CSR |= 1 << 0; 
+  SYST.CSR |= 1 << 1; 
+  SYST.CSR |= 1 << 2;
+}
+
+void bsem_enter(bsem_t* b) {
+  while (b->locked) {
+    systick_force_switch();
+  }
+
+  b->locked = true;
+}
+
+void bsem_leave(bsem_t* b) {
+  b->locked = false;
+}
+
+bsem_t LOCK = { false };
 
 /* 
  * Global variables 
  */
 
 thread_t* CURCTX = NULL;
-thread_t* RUNLIST = NULL;
-thread_t* FREELIST = NULL;
+
+static thread_list_t RUNLIST = { NULL, NULL };
+static thread_list_t FREELIST = { NULL, NULL };
 
 volatile unsigned __PSP = 0;
+
 
 /*
  * Internal function definitions
@@ -102,10 +204,8 @@ static void init_threads() {
     volatile void** as_double_p = (volatile void**) thd_iter;   
     volatile thread_t* thd = (volatile thread_t*)(*as_double_p);
     
-    if (thd != &__main__.thread) {
-      thd->sp = (unsigned)thd + 8 + (48 * 4);
-      
-      thread_append(&RUNLIST, (thread_t*)thd);
+    if (thd != &__main__.thread) {      
+      thread_list_append(&RUNLIST, (thread_t*)thd);
     }
 
     thd_iter += 4;
@@ -160,33 +260,8 @@ void __init_system() {
   CURCTX = (thread_t*)&__main__.thread;
   __PSP = __main__.thread.sp;
 
-  //  init_threads();
+  init_threads();
   __reset();
-}
-
-/*
- * System-Tick-Timer-On
- * 
- * SYST.RVR is set to 10 milliseconds for a 48 mhz
- * CPU.
- * 
- * We clear out the counter register, CVR,
- * which will fire the interrupt
- * when the systick timer is enabled.
- *
- * Bit 0 of SYST.CSR enables the systic timer.
- * Bit 1 of SYST.CSR enables the actual interrupt.
- * Bit 2 of SYST.CSR ensures our clock is the system clock.
- */
-
-void systick_on() {
-  SYST.RVR |= (48000 * 10) - 1; 
-
-  SYST.CVR &= ~((1 << 24) - 1);
-
-  SYST.CSR |= 1 << 0; 
-  SYST.CSR |= 1 << 1; 
-  SYST.CSR |= 1 << 2;
 }
 
 extern unsigned HARDFAULT_CODE;
@@ -228,49 +303,25 @@ extern unsigned HARDFAULT_CODE;
  *   is set to "standard GPIO output"
  *
  * Finally, we turn on the systick timer via
- * systick_on()
+ * systick_reset()
  */
 
 void setup() {
   setup_pll();
 
   SYSCON.SYSAHBCLKCTRL |= 1 << 6;
-
-  GPIO1.DATA[PIO_9] = 0;
-  //GPIO1.DIR |= PIO_9;
   
-  //GPIO0.DIR |= PIO_1 | PIO_2;
-
-  GPIO0.DATA[PIO_1 | PIO_2] = 0;
- 
-  IOCON_PIO0_1 &= ~0x3;
-  IOCON_PIO0_1 &= ~((1 << 3) | (1 << 4));
-  IOCON_PIO0_1 &= ~(1 << 5);
-  IOCON_PIO0_1 &= ~(1 << 10);
-
-  IOCON_PIO0_2 &= ~0x3;
-  IOCON_PIO0_2 &= ~((1 << 3) | (1 << 4));
-  IOCON_PIO0_2 &= ~(1 << 5);
-  IOCON_PIO0_2 &= ~(1 << 10);
   // --- SCREEN
-
   I2C_init();
   
   SSD1306_init();
   SSD1306_clear_screen();
-#if 0
-  const char* letters = "Hello World";
-
-  SSD1306_set_col_range(0, strlen(letters) * 6);
-  SSD1306_set_page_range(0, 4);
-  
-  SSD1306_write_text(letters);
-#endif
 
   // --- ADC
-
   setup_iocon();
   setup_adc();
+  
+  systick_reset();
 }
 
 /*
@@ -287,14 +338,16 @@ void setup() {
  */
 
 void loop() {
-  
+  asm("wfi");
+}
+
+void adc_thread() {
   while (1) {
-    SSD1306_clear_screen();
     
     ADC.CR |= (1 << 24); // start ADC conversion ([26:24])
 
     while (ADC.R0 < 0x7FFFFFFF) {
-      asm("nop");
+      asm("");
     }
 
     volatile unsigned VREF = (ADC.R0 >> 6) & 0x3FF;
@@ -302,19 +355,21 @@ void loop() {
 
     volatile double v_in = 3.3;
     volatile double v_out = 3.3 * (double)(VREF) / 1024.0;
-    //    volatile double R = (470.0 * vref) / (1.0 - vref);
 
     volatile double R = (v_out + 470) / (v_in - v_out);
 
+    bsem_enter(&LOCK);
+    
+    SSD1306_clear_screen();
     SSD1306_print_num(R);
 
-    volatile unsigned delay = 0;
-    while (delay < 10000000) {
-      delay++;
-    }
-  }
-}
+    bsem_leave(&LOCK);
 
+    msleep(1000);
+  }
+
+}
+ 
 /* Setup-PLL
  * 
  * Sets the main system clock to receive power 
@@ -371,9 +426,6 @@ void setup_adc() {
   SYSCON.PDRUNCFG &= ~SYSCON_PDRUNCFG_ADC_OFF;
 
   ADC.CR = ADC_CR_SEL_SET_CHANNEL(0); 
-  //  ADC.CR = ADC_CR_CLKDIV_SET_VALUE(11);
-
-  //ADC.CR &= 0xFFFF00FF;
   ADC.CR |= (10 << 8);
 
   ADC.CR = ADC_CR_BURST_SET_OFF;
@@ -381,73 +433,6 @@ void setup_adc() {
   ADC.CR = ADC_CR_START_SET_NO_START;
 
   // ADC.INTEN = ADC_INTEN_SET_ADGINTEN_ONLY;
-}
-
-/* 
- * Enable-interrupts
- *
- * Enables IRQ24 and IRQ16.
- * IRQ24 is used to handle ADC conversion,
- * and IRQ16 is fired at the start of every
- * 20 millisecond cycle 
- */
-
-void enable_ints() {
-  asm volatile ("CPSIE i");
-
-  ISER = ISER_IRQ24_ENABLED; 
-  ISER = ISER_IRQ16_ENABLED;
-}
-
-/*
- * Setup-Timer
- *
- * Uses match register 0 to serve as a pulse width modulated
- * output on pin 1. Match register 1 represents a 20 millisecond
- * cycle that resets the timer counter each time the end of the cycle
- * is hit. On every cycle, IRQ16 is fired (which in turn marks the beginning
- * of the analog to digital conversion process)
- */
-
-void setup_timer() {
-  SYSCON.SYSAHBCLKCTRL |= SYSCON_SYSAHBCLKCTRL_CT16B0_ON;
-
-  SET_LOW_16(TMR16B0.PR, 48); 
-  SET_LOW_16(TMR16B0.TC, 0);
-  SET_LOW_16(TMR16B0.PC, 0);
-  SET_LOW_16(TMR16B0.MR1, 200);
-  
-  TMR16B0.MCR = TMR16B0_MCR_ENABLE_MR1_I;
-  TMR16B0.MCR = TMR16B0_MCR_ENABLE_MR1_R;
-  
-  TMR16B0.PWMC = TMR16B0_PWMC_ENABLE_MR0;
-
-  // I have no idea why this works,
-  // because it contradicts the documentation.
-  // But it does work, and removing the &= ~0x3
-  // causes it to not work.
-  TMR16B0.TCR |= 2;
-  TMR16B0.TCR &= ~0x3;
-  TMR16B0.TCR |= 1;
-  
-  
-  //  TMR16B0.TCR &= ~0x3;
-  //TMR16B0.TCR |= (1 << 0); /* enable counter */
-  //TMR16B0.TCR |= (1 << 1); /* reset timer */
-}
-
-/*
- * IRQ16
- *
- * Triggered at the beginning of every Match 1 register cycle (every 20 milliseconds).
- * We start the ADC sample process here.
- */
-void IRQ16() {
-  TMR16B0.IR |= (1 << 1); /* set MR1 to HIGH */
-  ADC.CR |= (1 << 24); /* [26:24] START = Start conversion now */
-  
-  GPIO1.DATA[PIO_9] = 0;
-  GPIO0.DATA[PIO_8] = 0;
 }
 
 /*
@@ -462,99 +447,84 @@ void IRQ16() {
 void systick_schedule() {
   disable_int;
 
-  if (RUNLIST != NULL) {    
-    thread_t* next = thread_next(&RUNLIST);
-    CURCTX = next;
-    thread_append(&FREELIST, next);
+  if (thread_list_empty(&RUNLIST)) {
+    RUNLIST.head = FREELIST.head;
+    RUNLIST.tail = FREELIST.tail;
     
-  } else {
-    
-    RUNLIST = FREELIST;
-    FREELIST = NULL;
-
-    CURCTX = RUNLIST;
+    FREELIST.head = NULL;
+    FREELIST.tail = NULL;
   }
 
+  CURCTX = thread_list_next(&RUNLIST);
+  
+  thread_list_append(&FREELIST, CURCTX);
+
+  SCHEDULE_COUNT++;
+
+  if (SYSTICK_STATE.needs_reset) {
+    systick_reset();
+  }
+  
   enable_int;
 }
 
+bool thread_list_empty(thread_list_t* runlist) {
+  bool ret = false;
+  if (runlist->head == NULL) {
+    assert(runlist->tail == NULL, "thread_list_empty");
+    ret = true;
+  }
+  return ret;
+}
+
 /*
- * Thread-Append
+ * Thread-List-Append
  */
 
-void thread_append(thread_t** root, thread_t* thd) {
-  if (*root != NULL) {
-    thread_t* p = *root;
-    thd->next = NULL;
-
-    while (p->next != NULL) {
-      p = p->next;
-    }
-
-    p->next = thd;
+void thread_list_append(thread_list_t* runlist, thread_t* thd) {
+  if (runlist->head == NULL) {
+    assert(runlist->tail == NULL, "thread_append");
+    
+    runlist->head = thd;
+    runlist->head->next = NULL;
   } else {
-    *root = thd;
+    if (runlist->tail == NULL) {
+      runlist->tail = thd;
+      runlist->head->next = runlist->tail;
+    } else {
+      runlist->tail->next = thd;
+      runlist->tail = thd;
+    }
   }
 }
 
 /*
- * Thread-Next
- *
- * This may or may not be obvious 
- * (at least at first glance):
- * it's very important that 
- * *root = (*root)->next is executed
- * before k->next = NULL,
- * since before then k and *root
- * point to the same location :^)
+ * Thread-List-Next
  */
 
-thread_t* thread_next(thread_t** root) {
-  thread_t* k = NULL;
+static volatile unsigned TLN_COUNT = 0;
 
-  if (*root != NULL) {
-    k = *root;
-    *root = (*root)->next;
-    k->next = NULL;
-  }
+thread_t* thread_list_next(thread_list_t* runlist) {
+  TLN_COUNT++;
+  thread_t* ret = NULL;
   
-  return k;
-}
-
-/*
- * IRQ24
- * 
- * The ADC sampling process calls this function every time a sample has completed.
- * We get the VREF, and use that as a primary driver to the servo motor.
- * It's important to note that the manipulations performed on the VREF
- * are designed to allow for a pseudo interpolation process that currently
- * isn't effective as it could be, but it demonstrates well enough that the motor
- * can be turned.
- */
-
-volatile unsigned IRQ24_TICK = 1;
-
-void IRQ24() {
-  volatile unsigned DONE = ADC.STAT & 1;
-
-  if (DONE) {
-    volatile unsigned VREF = (ADC.R0 >> 6) & 0x3FF;
-    volatile unsigned MR1 = GET_LOW_16(TMR16B0.MR1);
-
-#ifdef MODULE_SERVO
-    unsigned ROTATE = ((VREF) | 1) * IRQ24_TICK;
-    ROTATE &= 0x3ff;
+  if (runlist->head != NULL) {
+    thread_t* n = runlist->head->next;
     
-    volatile unsigned WIDTH = MR1 - 500 - (ROTATE);
-    volatile unsigned TC = GET_LOW_16(TMR16B0.TC);
+    ret = runlist->head;
 
-    SET_LOW_16(TMR16B0.MR0, WIDTH);
-#else
-    
-#endif
-
-    IRQ24_TICK++;
+    runlist->head = n;
   }
+
+  if (runlist->head == runlist->tail) {
+    runlist->tail = NULL;
+  }
+
+  if (ret != NULL) {
+    ret->next = NULL;
+  }
+
+  return ret;
 }
 
 /*
@@ -569,4 +539,14 @@ unsigned strlen(const char* str) {
   }
 
   return count;
+}
+
+extern volatile char* HARDFAULT_MSG;
+
+void assert(bool cond, char* msg) {
+  if (!cond) {
+    HARDFAULT_MSG = msg;
+    void** x = NULL;
+    *x;
+  }
 }

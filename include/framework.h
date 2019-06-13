@@ -1,6 +1,8 @@
 #ifndef __FRAMEWORK_H__
 #define __FRAMEWORK_H__
 
+#include "lpc1114.h"
+
 /*
  * TODO: .init_array is currently unused; it will
  * be implemented soon.
@@ -18,17 +20,25 @@ struct thread {
   unsigned sp;
 };
 
-extern thread_t* CURCTX;
+typedef struct thread_list {
+  thread_t* head;
+  thread_t* tail;
+} thread_list_t;
 
-/*
- * TODO:
- *
- * The stack area for threads defined using this macro
- * currently won't actually be used; as a result,
- * it's necessary to compile this project using -O1.
- *
- * This will be fixed soon.
- */
+typedef volatile struct bsem {
+  bool locked;
+} bsem_t;
+
+extern bsem_t LOCK;
+
+void bsem_enter(bsem_t* b);
+void bsem_leave(bsem_t* b);
+
+void assert(bool cond, char* msg);
+
+void msleep(unsigned msec);
+
+extern thread_t* CURCTX;
 
 #define THREAD(name, function, stacksize, arg0, arg1, arg2, arg3)     \
 volatile struct {                                                     \
@@ -182,7 +192,7 @@ void setup_iocon();
 void enable_ints();
 
 /*
- * Thread-Append
+ * Thread-List-Append
  * 
  * Append the given thread
  * to the global context list of threads,
@@ -190,16 +200,26 @@ void enable_ints();
  * in a round-robin fashion.
  */
 
-void thread_append(thread_t** head, thread_t* thd);
+void thread_list_append(thread_list_t* head, thread_t* thd);
 
 /*
- * Thread-Next
+ * Thread-List-Next
  *
  * Deque the next thread from RUNLIST.
  * If RUNLIST is empty, NULL is returned.
  */
 
-thread_t* thread_next(thread_t** head);
+thread_t* thread_list_next(thread_list_t* runlist);
+
+/*
+ * Thread-List-Empty
+ *
+ * Deque the next thread from RUNLIST.
+ * If RUNLIST is empty, NULL is returned.
+ */
+
+bool thread_list_empty(thread_list_t* runlist);
+
 
 /*
  * String-Length
@@ -209,5 +229,11 @@ thread_t* thread_next(thread_t** head);
  */
 
 unsigned strlen(const char* str);
+
+
+void systick_enable();
+void systick_disable();
+void systick_force_switch();
+void systick_reset();
 
 #endif // __FRAMEWORK_H__

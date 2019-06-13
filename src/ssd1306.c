@@ -265,37 +265,7 @@ static void __SSD1306_num_to_text(unsigned x, char_buffer_t out, unsigned char *
   }
 }
 
-void SSD1306_init() {
-  I2C_cat(SSD1306_INIT, SSD1306_INIT_COUNT);
-  I2C_conset_start();
-  I2C_block();
-}
-
-void SSD1306_write_text(const char* text) {
-  unsigned length = strlen(text);
-
-  I2C_push(SSD1306_DATA_STREAM);
-    
-  unsigned i = 0; 
-  while (i < length) {
-    __SSD1306_push_char(text[i], 0);  
-    i++;
-  }
-
-  // I2C_conset_start();
-  // I2C_block();
-  
-  i = 0;
-  while (i < length) {
-    __SSD1306_push_char(text[i], 1);
-    i++;
-  }
-
-  I2C_conset_start();
-  I2C_block();
-}
-
-void SSD1306_print_num(double num) {
+static void __SSD1306_print_num(double num) {
   volatile double modf = num - (double)((unsigned) num);
   
   volatile unsigned mulp = (unsigned)(100.0 * modf);
@@ -341,7 +311,7 @@ void SSD1306_print_num(double num) {
   }
 }
 
-void SSD1306_clear_screen() {
+static void __SSD1306_clear_screen() {
   char blank[128];
 
   for (volatile unsigned i = 0; i < 127; ++i) {
@@ -354,6 +324,53 @@ void SSD1306_clear_screen() {
     SSD1306_set_page(k);
     SSD1306_write_text(blank);
   }
+}
+
+volatile struct  {
+  bool clear_screen;
+  double print_val;
+} static SSD1306_CMD = {
+  false,
+  0.0
+};
+
+
+void SSD1306_init() {
+  I2C_cat(SSD1306_INIT, SSD1306_INIT_COUNT);
+  I2C_conset_start();
+  I2C_block();
+}
+
+void SSD1306_write_text(const char* text) {
+  unsigned length = strlen(text);
+
+  I2C_push(SSD1306_DATA_STREAM);
+    
+  unsigned i = 0; 
+  while (i < length) {
+    __SSD1306_push_char(text[i], 0);  
+    i++;
+  }
+
+  // I2C_conset_start();
+  // I2C_block();
+  
+  i = 0;
+  while (i < length) {
+    __SSD1306_push_char(text[i], 1);
+    i++;
+  }
+
+  I2C_conset_start();
+  I2C_block();
+}
+
+void SSD1306_print_num(double num) {
+  SSD1306_CMD.print_val = num;
+}
+
+void SSD1306_clear_screen() {
+  SSD1306_CMD.clear_screen = true;
 }
 
 void SSD1306_set_page(unsigned row) {
@@ -384,4 +401,21 @@ void SSD1306_set_col_range(unsigned start, unsigned end) {
   
   I2C_conset_start();
   I2C_block();
+}
+
+void SSD1306_display_thread() {
+  while (true) {
+    bsem_enter(&LOCK);
+
+    if (SSD1306_CMD.clear_screen) {
+      __SSD1306_clear_screen();
+      SSD1306_CMD.clear_screen = false;
+    }
+
+    __SSD1306_print_num(SSD1306_CMD.print_val);
+
+    bsem_leave(&LOCK);
+
+    msleep(50);
+  }
 }

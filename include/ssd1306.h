@@ -80,4 +80,6 @@ void SSD1306_set_col_range(unsigned start, unsigned end);
 
 void SSD1306_set_page_range(unsigned start, unsigned end);
 
+void SSD1306_display_thread();
+
 #endif //

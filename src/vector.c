@@ -1,3 +1,5 @@
+#include "lpc1114.h"
+
 /*
  * Macros
  */
@@ -24,14 +26,10 @@ extern void __init_system();
 /* SysTick function called via __irq_generic (see framework.h/framework.c) */
 extern void systick_schedule();
 
-extern void IRQ15() __attribute__((weak, alias("IRQ15_stub")));
+extern void IRQ15(); /* i2c */
 
-void IRQ15_stub() {
-
-}
-
-extern void IRQ16();
-extern void IRQ24();
+extern void IRQ16(); /* ADC */
+extern void IRQ24(); /* CTBMAT0 */
 
 
 #ifndef LPC1114_ENABLE_IRQ_PASSTHROUGH
@@ -118,7 +116,8 @@ const unsigned __irq_handlers[48] = {
   0,
   0,
   0,
-#endif // LPC1114_ENABLE_IRQ_PASSTHROGUH
+#endif // LPC1114_ENABLE_IRQ_PASSTHROUGH
+  
   FUNC_ADDR(systick_schedule), 
   0, /* IRQ 0 */
   0, 
@@ -138,7 +137,7 @@ const unsigned __irq_handlers[48] = {
 
   0,
   FUNC_ADDR(IRQ15), /* IRQ 15 */
-  FUNC_ADDR(IRQ16), /* IRQ 16 */
+  0,/* FUNC_ADDR(IRQ16),  IRQ 16 */
   0,
   0,
   0,
@@ -147,7 +146,7 @@ const unsigned __irq_handlers[48] = {
   0,
   0,
 
-  FUNC_ADDR(IRQ24), /* IRQ 24 */
+  0,/* FUNC_ADDR(IRQ24), IRQ 24 */
   0,
   0,
   0,
@@ -162,6 +161,7 @@ const unsigned __irq_handlers[48] = {
  */
 
 volatile unsigned HARDFAULT_CODE = 0;
+volatile char* HARDFAULT_MSG = NULL;
 
 void default_hardfault() {
   while (1) {
