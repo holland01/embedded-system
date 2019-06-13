@@ -1,5 +1,6 @@
 #include "lpc1114.h"
 #include "framework.h"
+
 //#include "i2c.h"
 //#include "ssd1306.h"
 
@@ -190,8 +191,6 @@ void systick_on() {
 
 extern unsigned HARDFAULT_CODE;
 
-#define L(x) HARDFAULT_CODE = x
-
 /*
  * Setup
  *
@@ -233,11 +232,12 @@ extern unsigned HARDFAULT_CODE;
  */
 
 void setup() {
-  L(0);
-  
   setup_pll();
 
   SYSCON.SYSAHBCLKCTRL |= 1 << 6;
+
+  GPIO1.DATA[PIO_9] = 0;
+  GPIO1.DIR |= PIO_9;
   
 #if 0
   GPIO0.DIR |= PIO_1 | PIO_2;
@@ -270,19 +270,11 @@ void setup() {
 #endif
   // --- ADC
 
-  L(1);
   setup_iocon();
-
-  L(2);
   setup_adc();
-
-  L(3);
   setup_timer();
+  //enable_ints();
 
-  L(4);
-  enable_ints();
-
-  L(5);
   GPIO0.DATA[PIO_8] = 0;
 }
 
@@ -300,7 +292,25 @@ void setup() {
  */
 
 void loop() {
-  asm("wfi");
+  
+  while (1) {
+    ADC.CR |= (1 << 24); // start ADC conversion ([26:24])
+
+    while (ADC.R0 < 0x7FFFFFFF) {
+      asm("nop");
+    }
+
+    volatile unsigned VREF = (ADC.R0 >> 6) & 0x3FF;
+    volatile unsigned VREF2 = (ADC.R0 & 0xFFC0) >> 8;
+
+    volatile double v_in = 3.3;
+    volatile double v_out = 3.3 * (double)(VREF) / 1024.0;
+    //    volatile double R = (470.0 * vref) / (1.0 - vref);
+
+    volatile double R = (v_out + 470) / (v_in - v_out);
+    
+    asm("nop");
+  }
 }
 
 /* Setup-PLL
@@ -359,12 +369,16 @@ void setup_adc() {
   SYSCON.PDRUNCFG &= ~SYSCON_PDRUNCFG_ADC_OFF;
 
   ADC.CR = ADC_CR_SEL_SET_CHANNEL(0); 
-  ADC.CR = ADC_CR_CLKDIV_SET_VALUE(11);
+  //  ADC.CR = ADC_CR_CLKDIV_SET_VALUE(11);
+
+  //ADC.CR &= 0xFFFF00FF;
+  ADC.CR |= (10 << 8);
+
   ADC.CR = ADC_CR_BURST_SET_OFF;
   ADC.CR = ADC_CR_CLKS_SET_11_CLK_10_BIT;
   ADC.CR = ADC_CR_START_SET_NO_START;
 
-  ADC.INTEN = ADC_INTEN_SET_ADGINTEN_ONLY;
+  // ADC.INTEN = ADC_INTEN_SET_ADGINTEN_ONLY;
 }
 
 /* 
@@ -399,16 +413,25 @@ void setup_timer() {
   SET_LOW_16(TMR16B0.PR, 48); 
   SET_LOW_16(TMR16B0.TC, 0);
   SET_LOW_16(TMR16B0.PC, 0);
-  SET_LOW_16(TMR16B0.MR1, 20000); 
-
+  SET_LOW_16(TMR16B0.MR1, 200);
+  
   TMR16B0.MCR = TMR16B0_MCR_ENABLE_MR1_I;
   TMR16B0.MCR = TMR16B0_MCR_ENABLE_MR1_R;
   
   TMR16B0.PWMC = TMR16B0_PWMC_ENABLE_MR0;
-  
-  TMR16B0.TCR |= 2; /* reset timer */
+
+  // I have no idea why this works,
+  // because it contradicts the documentation.
+  // But it does work, and removing the &= ~0x3
+  // causes it to not work.
+  TMR16B0.TCR |= 2;
   TMR16B0.TCR &= ~0x3;
-  TMR16B0.TCR |= 0x1; /* enable counter */
+  TMR16B0.TCR |= 1;
+  
+  
+  //  TMR16B0.TCR &= ~0x3;
+  //TMR16B0.TCR |= (1 << 0); /* enable counter */
+  //TMR16B0.TCR |= (1 << 1); /* reset timer */
 }
 
 /*
@@ -525,7 +548,7 @@ void IRQ24() {
 
     SET_LOW_16(TMR16B0.MR0, WIDTH);
 #else
-    asm("nop");
+    
 #endif
 
     IRQ24_TICK++;
