@@ -222,6 +222,12 @@ static const unsigned char SSD1306_INIT[] = {
 
 static const unsigned SSD1306_INIT_COUNT = sizeof(SSD1306_INIT) / sizeof(SSD1306_INIT[0]);
 
+/*
+ * SSD1306-Push-Character
+ *
+ * Pushes a character to the data buffer
+ */
+
 static void __SSD1306_push_char(char c, unsigned half) {
   unsigned k = 0;
 
@@ -237,6 +243,12 @@ static void __SSD1306_push_char(char c, unsigned half) {
     k++;
   }
 }
+
+/*
+ * SSDS1306-Number-To-Text
+ *
+ * Converts and integer to a string
+ */ 
 
 #define char_buffer_len 8
 typedef char char_buffer_t[char_buffer_len];
@@ -264,6 +276,15 @@ static void __SSD1306_num_to_text(unsigned x, char_buffer_t out, unsigned char *
     *offset = 0xFF; // failure
   }
 }
+
+/*
+ * SSD1306-Print-Number
+ *
+ * Handles actual logic for printing
+ * a double to the screen. 
+ * 2 decimals of precision are used.
+ */
+
 
 static void __SSD1306_print_num(double num) {
   volatile double modf = num - (double)((unsigned) num);
@@ -311,6 +332,12 @@ static void __SSD1306_print_num(double num) {
   }
 }
 
+/*
+ * SSD1306-clear-screen
+ *
+ * Handles the actual logic for clearing the screen
+ */
+
 static void __SSD1306_clear_screen() {
   char blank[128];
 
@@ -326,6 +353,10 @@ static void __SSD1306_clear_screen() {
   }
 }
 
+/*
+ * Thread data
+ */
+
 volatile struct  {
   bool clear_screen;
   double print_val;
@@ -334,12 +365,25 @@ volatile struct  {
   0.0
 };
 
+/*
+ * SSD1306-Initialize
+ *
+ * Initializes the display device by sending
+ * a sequence of commands to it.
+ */
 
 void SSD1306_init() {
   I2C_cat(SSD1306_INIT, SSD1306_INIT_COUNT);
   I2C_conset_start();
   I2C_block();
 }
+
+/* 
+ * SSD1306-write-text
+ *
+ * Prints text to the display device
+ */
+
 
 void SSD1306_write_text(const char* text) {
   unsigned length = strlen(text);
@@ -365,21 +409,52 @@ void SSD1306_write_text(const char* text) {
   I2C_block();
 }
 
+/*
+ * SSD1306-print-number
+ *
+ * It's assumed that the critical region
+ * entered before the function is called
+ * so that other shared resources can be grouped
+ * in the same region
+ */
+
+
 void SSD1306_print_num(double num) {
   SSD1306_CMD.print_val = num;
 }
+
+/* 
+ * SSD1306-clearr-screen
+ *
+ * Flags a bool to clear the screen
+ * on the next thread execution
+ */
+
 
 void SSD1306_clear_screen() {
   SSD1306_CMD.clear_screen = true;
 }
 
+/*
+ * SSD1306-Set-Page
+ */
+
+
 void SSD1306_set_page(unsigned row) {
   SSD1306_set_page_range(row, SSD1306_PAGE_END);
 }
 
+/*
+ * SSD1306-Set-Column
+ */
+
 void SSD1306_set_col(unsigned col) {
   SSD1306_set_page_range(col, SSD1306_COL_END);
 }
+
+/*
+ * SSD1306-Set-Page-Range
+ */
 
 void SSD1306_set_page_range(unsigned start, unsigned end) {
   I2C_push(SSD1306_CMD_STREAM);
@@ -392,6 +467,10 @@ void SSD1306_set_page_range(unsigned start, unsigned end) {
   I2C_block();
 }
 
+/*
+ * SSD1306-Set-Column-Range
+ */
+
 void SSD1306_set_col_range(unsigned start, unsigned end) {
   I2C_push(SSD1306_CMD_STREAM);
   I2C_push(SSD1306_SET_COL_ADDR);
@@ -402,6 +481,10 @@ void SSD1306_set_col_range(unsigned start, unsigned end) {
   I2C_conset_start();
   I2C_block();
 }
+
+/*
+ * SSD1306-Display-Thread
+ */
 
 void SSD1306_display_thread() {
   while (true) {

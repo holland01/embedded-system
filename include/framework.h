@@ -25,18 +25,56 @@ typedef struct thread_list {
   thread_t* tail;
 } thread_list_t;
 
+/*
+ * Binary-Semaphore
+ */
+
 typedef volatile struct bsem {
   bool locked;
 } bsem_t;
 
 extern bsem_t LOCK;
 
+/*
+ * Binary-Semaphore-Enter
+ */
+
 void bsem_enter(bsem_t* b);
+
+/*
+ * Binary-Semaphore-Leave
+ */
+
 void bsem_leave(bsem_t* b);
+
+/*
+ * Assert
+ *
+ * Triggers a hardfault if cond is false and
+ * copies the pointer to the string 'msg'
+ * so it can be viewed in the debugger
+ */
 
 void assert(bool cond, char* msg);
 
+/*
+ * Millisecond-Sleep
+ *
+ * Does exactly what the name implies: 
+ * spins a loop for 'msec' milliseconds.
+ * The amount of iterations are calculated
+ * according to a 48 MHZ CPU speed
+ * and ARM Cortex M0 instruction cycle counts
+ */
+
 void msleep(unsigned msec);
+
+/*
+ * The currently executing thread.
+ * Is used by __irq_generic
+ * to save and restore state.
+ * Also set in systick_schedule()
+ */
 
 extern thread_t* CURCTX;
 
@@ -96,17 +134,6 @@ extern volatile unsigned __PSP;
 
 void __init_system();
 
-/*
- * System-Tick-Timer-On
- *
- * Used to initialize the system-tick-timer
- * interrupt to a 10ms interval. The interrupt is 
- * used to perform thread context
- * switching. The interrupt code
- * is defined in systick_schedule().
- */
-
-void systick_on();
 
 /*
  * Setup
@@ -214,8 +241,9 @@ thread_t* thread_list_next(thread_list_t* runlist);
 /*
  * Thread-List-Empty
  *
- * Deque the next thread from RUNLIST.
- * If RUNLIST is empty, NULL is returned.
+ * Returns 'true' if runlist
+ * has no nodes (i.e., its head and tail
+ * values are both NULL)
  */
 
 bool thread_list_empty(thread_list_t* runlist);
@@ -230,10 +258,27 @@ bool thread_list_empty(thread_list_t* runlist);
 
 unsigned strlen(const char* str);
 
+/*
+ * System-Tick-Timer-Force-Switch
+ *
+ * Dead simple function that 
+ * a) forces the systick interrupt to fire, and
+ * b) resets the timer value to 10 milliseconds 
+ *    when the interrupt is finished executing 
+ */
 
-void systick_enable();
-void systick_disable();
 void systick_force_switch();
+
+/*
+ * System-Tick-Timer-Reset
+ *
+ * Used to initialize the system-tick-timer
+ * interrupt to a 10ms interval. The interrupt is 
+ * used to perform thread context
+ * switching. The interrupt code
+ * is defined in systick_schedule().
+ */
+
 void systick_reset();
 
 #endif // __FRAMEWORK_H__

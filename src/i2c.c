@@ -69,17 +69,32 @@ volatile struct {
   0,
   0
 };
-
+/*
+ * See I2C_block()
+ */ 
 static volatile bool _I2C_busy = false;
 
 /* Defined in vector.c */
 extern volatile unsigned HARDFAULT_CODE;
 extern void hardfault();
 
+/*
+ * I2C-Die
+ *
+ * Used for error conditions in state machine
+ */
+
 static void __I2C_die(unsigned state) {
   HARDFAULT_CODE = state;
   hardfault();
 }
+
+/* 
+ * I2C-Data-Clear
+ *
+ * Resets the I2C buffer
+ * for the next transmission
+ */
 
 static void __I2C_data_clear() {
   _I2CBUF.data_ptr = 0;
@@ -91,11 +106,27 @@ static void __I2C_data_clear() {
   _I2CBUF.data_length = 0;
 }
 
+/*
+ * I2C-con-stop
+ *
+ * When the bus has finished the
+ * entire transfer process, 
+ * the synchronization can be completed
+ */
+
 static void __I2C_con_stop() {
   _I2C_busy = 0;
   I2C0.CONSET = STO;
   I2C0.CONCLR = STA | AA | SI;  
 }
+
+
+/*
+ * I2C-concatenate
+ *
+ * Take an arbitrary amount of bytes
+ * and push it to the data stream
+ */
 
 void I2C_cat(const unsigned char* d, unsigned len) {
   unsigned capacity = DATA_BUFFER_LENGTH - _I2CBUF.data_length;
@@ -113,14 +144,38 @@ void I2C_cat(const unsigned char* d, unsigned len) {
   }
 }
 
+/*
+ * I2C-Push
+ *
+ * Pushes an arbitrary byte onto the 
+ * data stream that's sent over the I2C state machine
+ */
+
+
 void I2C_push(unsigned char b) {
   I2C_cat(&b, 1);
 }
+
+/*
+ * I2C-console-set-start
+ *
+ * Initializes the state machine
+ * transfer process
+ */
+
 
 void I2C_conset_start() {
   I2C0.CONSET |= STA;
   _I2C_busy = 1;
 }
+
+/*
+ * I2C-Block
+ *
+ * Waits until the entire transfer process
+ * is finished. 
+ */
+
 
 void I2C_block() {
   while (_I2C_busy) {
@@ -193,6 +248,10 @@ void IRQ15() {
 
   asm("cpsie i");
 }
+
+/*
+ * I2C-Initialize
+ */
 
 void I2C_init() {
     // (IC2 = Enable) | (IOCON = Enable)

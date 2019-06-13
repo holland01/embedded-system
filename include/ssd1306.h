@@ -63,22 +63,82 @@
 #define SSD1306_PAGE_END 0x07
 #define SSD1306_COL_END 0x7f
 
+/*
+ * SSD1306-Initialize
+ *
+ * Initializes the display device by sending
+ * a sequence of commands to it.
+ */
 
 void SSD1306_init();
 
+/* 
+ * SSD1306-write-text
+ *
+ * Prints text to the display device
+ */
+
 void SSD1306_write_text(const char* text);
+
+/* 
+ * SSD1306-clearr-screen
+ *
+ * Flags a bool to clear the screen
+ * on the next thread execution
+ */
 
 void SSD1306_clear_screen();
 
+/*
+ * SSD1306-print-number
+ *
+ * a double to an internal
+ * global which is later read
+ * from the display thread and
+ * printed to the screen
+ */
+
+
 void SSD1306_print_num(double num);
+
+/*
+ * SSD1306-Set-Page
+ *
+ * Set the starting page column.
+ * End page is the default
+ */
 
 void SSD1306_set_page(unsigned row);
 
+/*
+ * SSD1306-Set-Column
+ *
+ * Similar to the above, just for columns
+ */
+
 void SSD1306_set_col(unsigned col);
+
+/*
+ * SSD1306-Set-Column-Range
+ *
+ * You can specify the end if wish.
+ */
 
 void SSD1306_set_col_range(unsigned start, unsigned end);
 
+/*
+ * SSD1306-Set-Page-Range
+ *
+ * Set the starting/ending page values
+ */
+
 void SSD1306_set_page_range(unsigned start, unsigned end);
+
+/*
+ * SSD1306-Display-Thread
+ *
+ * The main thread for the doisplay
+ */
 
 void SSD1306_display_thread();
 
