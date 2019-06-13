@@ -6,7 +6,7 @@ INCLUDE=./include
 LIBS=-L./lib -l:libgcc.a
 CCLIBS=#./lib/libgcc.a
 
-FLAGS := -g -ggdb -mcpu=cortex-m0 -I$(INCLUDE) -O0
+FLAGS := -g -ggdb -mcpu=cortex-m0 -I$(INCLUDE) -O0 -DLPC1114_ENABLE_IRQ_PASSTHROUGH
 TARGET := lpc1114image.bin
 
 SRC=./src
