@@ -37,7 +37,7 @@ OPENOCD_TARGET := $(OPENOCD_ROOT)/target/lpc11xx.cfg
 OPENOCD_INTERFACE := $(OPENOCD_ROOT)/interface/stlink.cfg
 
 $(TARGET): $(OBJECTS) obj/irq.o $(GCCOBJS)
-	$(LD) -M -T lpc1114.ld $(LIBS) -o $@ $^ > $@.map
+	$(LD) -M -T lpc1114.ld -o $@ $^ > $@.map
 
 objmake:
 	mkdir -p obj/lib
