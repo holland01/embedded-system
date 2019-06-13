@@ -291,11 +291,13 @@ void adc_thread() {
     volatile unsigned VREF = (ADC.R0 >> 6) & 0x3FF;
     volatile unsigned VREF2 = (ADC.R0 & 0xFFC0) >> 8;
 
-    volatile double v_in = 3.3;
-    volatile double v_out = 3.3 * (double)(VREF) / 1024.0;
+    //volatile double v_in = 3.3;
+    //volatile double v_out = 3.3 * (double)(VREF) / 1024.0;
 
-    volatile double R = (v_out + 470) / (v_in - v_out);
+    //volatile double R = (v_out + 470) / (v_in - v_out);
 
+    volatile double R = ((double)VREF * 470.0) / (1024.0 - (double)VREF);
+    
     bsem_enter(&LOCK);
     
     SSD1306_clear_screen();
